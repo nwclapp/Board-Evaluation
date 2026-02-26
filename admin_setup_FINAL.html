@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hestia - Admin Setup (FINAL)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f8fafc;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #605C7F 0%, #302E3F 100%);
+            color: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo-container { display: flex; align-items: center; gap: 12px; }
+        
+        .icon-square {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #D97757 0%, #C1543A 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .icon-h { font-size: 32px; font-weight: 900; color: white; }
+        .logo-text { font-size: 32px; font-weight: 600; letter-spacing: -0.5px; }
+        .tagline {
+            color: rgba(255,255,255,0.8);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 2px;
+        }
+        
+        .header-right { text-align: right; }
+        .header-title { font-size: 18px; font-weight: 600; margin-bottom: 3px; }
+        .header-subtitle { opacity: 0.8; font-size: 13px; }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
+        
+        /* UNIFORM TAB WIDTH */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s;
+            width: 200px; /* UNIFORM WIDTH */
+            text-align: center;
+        }
+        
+        .tab:hover { color: #D97757; background: #fef2ee; }
+        .tab.active { color: #D97757; background: white; border-bottom: 3px solid #D97757; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Organization Type */
+        .org-type-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .org-type-card:hover {
+            border-color: #D97757;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(217, 119, 87, 0.1);
+        }
+        
+        .org-type-card.selected { border-color: #D97757; background: #fef2ee; }
+        .org-type-icon { font-size: 36px; margin-bottom: 10px; }
+        .org-type-name { font-weight: 600; color: #1e293b; font-size: 14px; }
+        
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 25px;
+        }
+        
+        /* Competency Cards - Tight Spacing */
+        .competency-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 10px 12px;
+            transition: all 0.3s;
+            cursor: pointer;
+            margin-bottom: 6px;
+        }
+        
+        .competency-card:hover { border-color: #D97757; background: #fef2ee; }
+        .competency-card.selected { border-color: #D97757; background: #fef2ee; }
+        
+        .competency-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .competency-category-tag {
+            font-size: 10px;
+            font-weight: 600;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .competency-description {
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.4;
+            margin-top: 2px;
+        }
+        
+        .competency-config-item {
+            background: white;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 2px solid #e2e8f0;
+            margin-bottom: 8px;
+        }
+        
+        /* Box Selectors */
+        .box-selector-container { margin: 10px 0; }
+        .box-selector-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 6px;
+            display: block;
+        }
+        
+        .box-selector { display: flex; gap: 0; margin-bottom: 4px; }
+        
+        .box-option {
+            flex: 1;
+            padding: 8px 6px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            border-right: none;
+        }
+        
+        .box-option:first-child { border-radius: 6px 0 0 6px; }
+        .box-option:last-child { border-radius: 0 6px 6px 0; border-right: 2px solid #e2e8f0; }
+        .box-option:hover:not(.selected) { background: #f8fafc; border-color: #cbd5e1; }
+        
+        .box-option.selected {
+            background: linear-gradient(135deg, #D97757 0%, #C1543A 100%);
+            color: white;
+            border-color: #D97757;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .box-labels { display: flex; font-size: 10px; color: #64748b; margin-top: 4px; }
+        .box-labels span { flex: 1; text-align: center; }
+        .box-labels.level-of-need-labels span:nth-child(2),
+        .box-labels.level-of-need-labels span:nth-child(4) { opacity: 0; }
+        
+        /* Directors */
+        .director-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .director-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .director-photo-placeholder {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #D97757 0%, #C1543A 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: 700;
+            margin: 0 auto 10px;
+        }
+        
+        .director-name { font-weight: 600; color: #1e293b; margin-bottom: 5px; }
+        .director-email { font-size: 13px; color: #64748b; }
+        
+        /* Director Assignment Card */
+        .director-assignment-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .director-assignment-card.using-prior {
+            background: #fef3c7;
+            border-color: #f59e0b;
+        }
+        
+        .director-assignment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .prior-eval-selector {
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        
+        /* Assignment Matrix */
+        .assignment-matrix {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        
+        .assignment-matrix table { min-width: 800px; }
+        
+        .assignment-matrix .sticky-col {
+            position: sticky;
+            left: 0;
+            background: white;
+            font-weight: 600;
+            z-index: 1;
+        }
+        
+        .assignment-matrix th.sticky-col { background: #f1f5f9; }
+        .assignment-matrix th { text-align: center; font-size: 12px; }
+        .assignment-matrix td { text-align: center; }
+        
+        .assignment-matrix input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .assignment-matrix input[type="checkbox"]:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #D97757 0%, #C1543A 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(217, 119, 87, 0.3);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #475569;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .btn-secondary:hover { border-color: #D97757; color: #D97757; }
+        
+        .btn-large {
+            padding: 16px 32px;
+            font-size: 16px;
+        }
+        
+        .selected-count {
+            display: inline-block;
+            background: linear-gradient(135deg, #D97757 0%, #C1543A 100%);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        
+        th {
+            background: #f1f5f9;
+            color: #475569;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
+            font-size: 13px;
+        }
+        
+        td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover { background: #f8fafc; }
+        
+        /* Info boxes */
+        .info-box {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .success-box {
+            background: #dcfce7;
+            border-left: 4px solid #10b981;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        /* Review Summary */
+        .review-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+        
+        .review-item {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .review-item h4 {
+            color: #1e293b;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .review-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #D97757;
+            margin-bottom: 5px;
+        }
+        
+        .review-detail {
+            color: #64748b;
+            font-size: 13px;
+        }
+        
+        .checklist {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .checklist-item:last-child { border-bottom: none; }
+        
+        .checklist-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        
+        .checklist-icon.complete {
+            background: #10b981;
+            color: white;
+        }
+        
+        .checklist-icon.incomplete {
+            background: #e2e8f0;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo-container">
+                <div class="icon-square">
+                    <div class="icon-h">H</div>
+                </div>
+                <div>
+                    <div class="logo-text">hestia</div>
+                    <div class="tagline">Board Evaluation</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="header-title">Admin Setup - FINAL VERSION</div>
+                <div class="header-subtitle">Configure your evaluation process</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- UNIFORM WIDTH TABS -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab(0)">Organization</button>
+            <button class="tab" onclick="showTab(1)">Competencies</button>
+            <button class="tab" onclick="showTab(2)">Configure</button>
+            <button class="tab" onclick="showTab(3)">Evaluators</button>
+            <button class="tab" onclick="showTab(4)">Assignments</button>
+            <button class="tab" onclick="showTab(5)">History</button>
+            <button class="tab" onclick="showTab(6)">Review & Launch</button>
+        </div>
+
+        <!-- TAB 1: ORGANIZATION -->
+        <div class="tab-content active">
+            <div class="section-card">
+                <h3 style="margin-bottom: 15px; color: #1e293b; font-size: 18px;">Organization Type</h3>
+                <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">
+                    This determines which competency categories and industry-specific options will be available.
+                </p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div class="org-type-card selected" onclick="selectOrgType(this)">
+                        <div class="org-type-icon">🏠</div>
+                        <div class="org-type-name">Family-Owned Business</div>
+                    </div>
+                    <div class="org-type-card" onclick="selectOrgType(this)">
+                        <div class="org-type-icon">💝</div>
+                        <div class="org-type-name">Nonprofit</div>
+                    </div>
+                    <div class="org-type-card" onclick="selectOrgType(this)">
+                        <div class="org-type-icon">📈</div>
+                        <div class="org-type-name">Public Company</div>
+                    </div>
+                    <div class="org-type-card" onclick="selectOrgType(this)">
+                        <div class="org-type-icon">🏢</div>
+                        <div class="org-type-name">Private Company</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 25px; padding-top: 25px; border-top: 2px solid #e2e8f0;">
+                    <h4 style="margin-bottom: 12px; color: #1e293b; font-size: 16px;">Industry</h4>
+                    <select id="industrySelect" style="width: 100%; max-width: 400px; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;" onchange="showSpecialties()">
+                        <option value="">Select industry...</option>
+                        <option value="real_estate">Real Estate</option>
+                        <option value="technology">Technology</option>
+                        <option value="manufacturing">Manufacturing</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="financial_services">Financial Services</option>
+                    </select>
+                    
+                    <div id="specialtySelection" style="margin-top: 15px; display: none;">
+                        <h4 style="margin-bottom: 12px; color: #1e293b; font-size: 16px;">Specialty Areas</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox"> Commercial Development
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox"> Multifamily
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox"> Industrial
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox"> Retail
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="color: #1e293b; font-size: 18px;">Board Directors (8)</h3>
+                    <button class="btn btn-primary">+ Add Director</button>
+                </div>
+                
+                <div class="director-grid">
+                    <div class="director-card">
+                        <div class="director-photo-placeholder">RS</div>
+                        <div class="director-name">Robert Smith</div>
+                        <div class="director-email">robert@smithholdings.com</div>
+                    </div>
+                    <div class="director-card">
+                        <div class="director-photo-placeholder">SJ</div>
+                        <div class="director-name">Sarah Johnson</div>
+                        <div class="director-email">sarah@example.com</div>
+                    </div>
+                    <div class="director-card">
+                        <div class="director-photo-placeholder">MC</div>
+                        <div class="director-name">Michael Chen</div>
+                        <div class="director-email">mchen@example.com</div>
+                    </div>
+                    <div class="director-card">
+                        <div class="director-photo-placeholder">JD</div>
+                        <div class="director-name">Jennifer Davis</div>
+                        <div class="director-email">jdavis@example.com</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: COMPETENCIES -->
+        <div class="tab-content">
+            <div class="section-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 5px;">Competency Library</h3>
+                        <p style="color: #64748b; font-size: 14px;">Select competencies to include in your evaluation</p>
+                    </div>
+                    <div>
+                        <span class="selected-count" id="selectedCount">12 selected</span>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <h4 style="color: #475569; font-size: 16px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0;">Family Pulse</h4>
+                    
+                    <div class="competency-card selected" onclick="toggleCompetency(this)">
+                        <div class="competency-title">
+                            Family Dynamics & Politics
+                            <span class="competency-category-tag">Family Pulse</span>
+                        </div>
+                        <p class="competency-description">Well networked, understands how the family thinks and responds</p>
+                    </div>
+                    
+                    <div class="competency-card selected" onclick="toggleCompetency(this)">
+                        <div class="competency-title">
+                            Next Generation Development
+                            <span class="competency-category-tag">Family Pulse</span>
+                        </div>
+                        <p class="competency-description">Focused on developing the next generation for leadership roles</p>
+                    </div>
+                    
+                    <div class="competency-card" onclick="toggleCompetency(this)">
+                        <div class="competency-title">
+                            Family Governance
+                            <span class="competency-category-tag">Family Pulse</span>
+                        </div>
+                        <p class="competency-description">Understands family governance structures</p>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <h4 style="color: #475569; font-size: 16px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0;">Industry Expertise</h4>
+                    
+                    <div class="competency-card selected" onclick="toggleCompetency(this)">
+                        <div class="competency-title">
+                            Capital Markets Expertise
+                            <span class="competency-category-tag">Industry Expertise</span>
+                        </div>
+                        <p class="competency-description">Understanding of CMBS, REIT structures, financing</p>
+                    </div>
+                    
+                    <div class="competency-card selected" onclick="toggleCompetency(this)">
+                        <div class="competency-title">
+                            Digital Transformation
+                            <span class="competency-category-tag">Industry Expertise</span>
+                        </div>
+                        <p class="competency-description">Technology platforms, PropTech, digital business models</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: CONFIGURE -->
+        <div class="tab-content">
+            <div class="section-card">
+                <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 15px;">Configure Selected Competencies</h3>
+                
+                <div class="competency-config-item">
+                    <div style="margin-bottom: 8px;">
+                        <strong style="font-size: 14px; color: #1e293b;">Family Dynamics & Politics</strong>
+                        <span class="competency-category-tag" style="margin-left: 8px;">Family Pulse</span>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="box-selector-container">
+                            <label class="box-selector-label">Level of Need</label>
+                            <div class="box-selector">
+                                <div class="box-option" onclick="selectLevelBox(this)"><div style="height: 8px;"></div></div>
+                                <div class="box-option" onclick="selectLevelBox(this)"><div style="height: 8px;"></div></div>
+                                <div class="box-option selected" onclick="selectLevelBox(this)"><div style="height: 8px;"></div></div>
+                                <div class="box-option" onclick="selectLevelBox(this)"><div style="height: 8px;"></div></div>
+                                <div class="box-option" onclick="selectLevelBox(this)"><div style="height: 8px;"></div></div>
+                            </div>
+                            <div class="box-labels level-of-need-labels">
+                                <span>Light</span><span></span><span>Medium</span><span></span><span>Heavy</span>
+                            </div>
+                        </div>
+                        
+                        <div class="box-selector-container">
+                            <label class="box-selector-label">Evaluated By</label>
+                            <div class="box-selector">
+                                <div class="box-option" onclick="selectEvalBox(this)">Peer Only</div>
+                                <div class="box-option selected" onclick="selectEvalBox(this)">Both</div>
+                                <div class="box-option" onclick="selectEvalBox(this)">Self Only</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: EVALUATORS -->
+        <div class="tab-content">
+            <div class="section-card">
+                <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 15px;">Evaluator Roster</h3>
+                <button class="btn btn-primary" style="margin-bottom: 20px;">✓ Add All Directors as Evaluators</button>
+                
+                <h4 style="color: #1e293b; font-size: 16px; margin: 25px 0 15px;">Add External Evaluators</h4>
+                <div style="display: grid; grid-template-columns: 2fr 2fr 2fr auto; gap: 10px; padding: 20px; background: #f8fafc; border-radius: 8px; border: 2px dashed #cbd5e1; margin-bottom: 25px;">
+                    <input type="text" placeholder="Name" style="padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 6px;">
+                    <input type="email" placeholder="Email" style="padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 6px;">
+                    <select style="padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 6px;">
+                        <option>Board Advisor</option>
+                        <option>Former Director</option>
+                        <option>Governance Consultant</option>
+                    </select>
+                    <button class="btn btn-primary">+ Add</button>
+                </div>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Board Member?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Robert Smith</strong></td>
+                            <td>robert@smithholdings.com</td>
+                            <td>Director</td>
+                            <td style="color: #10b981; font-weight: 600;">✓ Yes</td>
+                        </tr>
+                        <tr style="background: #fef9e8;">
+                            <td><strong>Dr. Patricia Williams</strong></td>
+                            <td>pwilliams@advisory.com</td>
+                            <td>Board Advisor</td>
+                            <td style="color: #64748b;">✗ No (External)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 5: ASSIGNMENTS (WITH CUSTOM MATRIX & PRIOR EVAL) -->
+        <div class="tab-content">
+            <div class="section-card">
+                <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 15px;">Assign Evaluators to Directors</h3>
+                
+                <div style="background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+                    <h4 style="margin-bottom: 15px;">Quick Assignment</h4>
+                    <button class="btn btn-primary" style="margin-right: 10px;" onclick="applyAllToAll()">✓ All-to-All</button>
+                    <button class="btn btn-secondary" onclick="showCustomMatrix()">Custom Assignment Matrix</button>
+                </div>
+                
+                <div class="info-box">
+                    <strong>💡 Tip:</strong> Use "Custom Assignment" to assign specific evaluators to specific directors, or to use a prior year's evaluation for directors whose terms are expiring.
+                </div>
+                
+                <!-- CUSTOM ASSIGNMENT PER DIRECTOR -->
+                <div id="customAssignmentSection" style="display: none;">
+                    <h3 style="margin: 30px 0 20px; color: #1e293b; font-size: 18px;">Custom Assignment Configuration</h3>
+                    
+                    <!-- DIRECTOR 1 -->
+                    <div class="director-assignment-card">
+                        <div class="director-assignment-header">
+                            <div>
+                                <h4 style="font-size: 16px; color: #1e293b; margin-bottom: 5px;">Robert Smith</h4>
+                                <p style="font-size: 13px; color: #64748b;">Term Expires: June 2027</p>
+                            </div>
+                        </div>
+                        
+                        <div class="prior-eval-selector">
+                            <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; cursor: pointer;">
+                                <input type="radio" name="robert-source" value="new" checked onchange="togglePriorEval('robert', false)">
+                                <strong>New Evaluation</strong> - Assign evaluators below
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="radio" name="robert-source" value="prior" onchange="togglePriorEval('robert', true)">
+                                <strong>Use Prior Evaluation</strong>
+                            </label>
+                            
+                            <div id="robert-prior-options" style="margin-left: 28px; margin-top: 10px; display: none;">
+                                <select style="padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 6px; margin-right: 10px;">
+                                    <option value="2025">2025 Evaluation</option>
+                                    <option value="2024">2024 Evaluation</option>
+                                </select>
+                                <button class="btn btn-secondary btn-small" style="padding: 6px 12px; font-size: 13px;">Preview</button>
+                                <div style="margin-top: 10px; padding: 10px; background: #dcfce7; border-radius: 4px; font-size: 13px;">
+                                    ✓ Competencies match - safe to use
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="robert-evaluators">
+                            <h5 style="margin: 15px 0 10px; color: #475569; font-size: 14px;">Assign Evaluators (8 available)</h5>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" checked> Sarah Johnson
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" checked> Michael Chen
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" checked> Jennifer Davis
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" checked> Dr. Patricia Williams
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- DIRECTOR 2 - USING PRIOR EVAL -->
+                    <div class="director-assignment-card using-prior">
+                        <div class="director-assignment-header">
+                            <div>
+                                <h4 style="font-size: 16px; color: #1e293b; margin-bottom: 5px;">Sarah Johnson</h4>
+                                <p style="font-size: 13px; color: #64748b;">Term Expires: December 2026</p>
+                            </div>
+                            <div style="background: #f59e0b; color: white; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 700;">
+                                USING 2025 EVALUATION
+                            </div>
+                        </div>
+                        
+                        <div class="prior-eval-selector">
+                            <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; cursor: pointer;">
+                                <input type="radio" name="sarah-source" value="new" onchange="togglePriorEval('sarah', false)">
+                                <strong>New Evaluation</strong> - Assign evaluators below
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="radio" name="sarah-source" value="prior" checked onchange="togglePriorEval('sarah', true)">
+                                <strong>Use Prior Evaluation</strong>
+                            </label>
+                            
+                            <div id="sarah-prior-options" style="margin-left: 28px; margin-top: 10px;">
+                                <select style="padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 6px; margin-right: 10px;">
+                                    <option value="2025" selected>2025 Evaluation</option>
+                                    <option value="2024">2024 Evaluation</option>
+                                </select>
+                                <button class="btn btn-secondary btn-small" style="padding: 6px 12px; font-size: 13px;">Preview</button>
+                                <div style="margin-top: 10px; padding: 10px; background: #dcfce7; border-radius: 4px; font-size: 13px;">
+                                    ✓ Competencies match - safe to use
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="sarah-evaluators" style="display: none;">
+                            <h5 style="margin: 15px 0 10px; color: #475569; font-size: 14px;">Assign Evaluators</h5>
+                            <p style="color: #64748b; font-size: 13px; font-style: italic;">Evaluator assignment disabled when using prior evaluation data</p>
+                        </div>
+                    </div>
+                    
+                    <div class="warning-box" style="margin-top: 20px;">
+                        <strong>⚠️ Important:</strong> When using a prior evaluation, evaluator assignments are automatically disabled. The historical evaluation data will be used in the 2026 report. This is recommended only for directors whose terms are expiring soon.
+                    </div>
+                </div>
+                
+                <!-- MATRIX VIEW -->
+                <div id="matrixView">
+                    <h4 style="margin: 25px 0 15px; color: #1e293b;">Assignment Matrix</h4>
+                    <div class="assignment-matrix">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="sticky-col">Evaluator ↓ / Director →</th>
+                                    <th>Robert Smith</th>
+                                    <th>Sarah Johnson</th>
+                                    <th>Michael Chen</th>
+                                    <th>Jennifer Davis</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="sticky-col"><strong>Robert Smith</strong></td>
+                                    <td><input type="checkbox" disabled></td>
+                                    <td><input type="checkbox" checked></td>
+                                    <td><input type="checkbox" checked></td>
+                                    <td><input type="checkbox" checked></td>
+                                </tr>
+                                <tr>
+                                    <td class="sticky-col"><strong>Sarah Johnson</strong></td>
+                                    <td><input type="checkbox" checked></td>
+                                    <td><input type="checkbox" disabled></td>
+                                    <td><input type="checkbox" checked></td>
+                                    <td><input type="checkbox" checked></td>
+                                </tr>
+                                <tr style="background: #fef9e8;">
+                                    <td class="sticky-col"><strong>Dr. Patricia Williams</strong></td>
+                                    <td><input type="checkbox" checked></td>
+                                    <td><input type="checkbox" checked></td>
+                                    <td><input type="checkbox"></td>
+                                    <td><input type="checkbox"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 6: HISTORY -->
+        <div class="tab-content">
+            <div class="section-card">
+                <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 15px;">Competency History</h3>
+                
+                <table style="min-width: 800px;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left;">Competency</th>
+                            <th style="text-align: center;">2026</th>
+                            <th style="text-align: center;">2025</th>
+                            <th style="text-align: center;">2024</th>
+                            <th>Changes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Family Dynamics</td>
+                            <td style="text-align: center; background: #dcfce7; font-weight: 700;">✓</td>
+                            <td style="text-align: center; background: #dcfce7; font-weight: 700;">✓</td>
+                            <td style="text-align: center; background: #dcfce7; font-weight: 700;">✓</td>
+                            <td style="color: #64748b;">Unchanged</td>
+                        </tr>
+                        <tr style="background: #fef3c7;">
+                            <td><strong>Digital Transformation</strong></td>
+                            <td style="text-align: center; background: #dcfce7; font-weight: 700;">✓</td>
+                            <td style="text-align: center; background: #f8fafc; color: #cbd5e1;">—</td>
+                            <td style="text-align: center; background: #f8fafc; color: #cbd5e1;">—</td>
+                            <td><span style="background: #fef3c7; padding: 4px 8px; border-radius: 4px; font-weight: 600;">NEW 2026</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 7: REVIEW & LAUNCH -->
+        <div class="tab-content">
+            <div class="section-card">
+                <h2 style="font-size: 28px; color: #1e293b; margin-bottom: 10px;">🚀 Review & Launch</h2>
+                <p style="color: #64748b; font-size: 15px; margin-bottom: 30px;">Review your configuration and launch the evaluation</p>
+                
+                <!-- SUMMARY STATS -->
+                <div class="review-grid">
+                    <div class="review-item">
+                        <h4>Organization Type</h4>
+                        <div class="review-value">🏠</div>
+                        <div class="review-detail">Family-Owned Business<br>Real Estate Industry</div>
+                    </div>
+                    
+                    <div class="review-item">
+                        <h4>Board Directors</h4>
+                        <div class="review-value">8</div>
+                        <div class="review-detail">All directors active</div>
+                    </div>
+                    
+                    <div class="review-item">
+                        <h4>Competencies</h4>
+                        <div class="review-value">12</div>
+                        <div class="review-detail">Selected for evaluation</div>
+                    </div>
+                    
+                    <div class="review-item">
+                        <h4>Evaluators</h4>
+                        <div class="review-value">9</div>
+                        <div class="review-detail">8 directors + 1 external</div>
+                    </div>
+                    
+                    <div class="review-item">
+                        <h4>Total Evaluations</h4>
+                        <div class="review-value">64</div>
+                        <div class="review-detail">8 directors × 8 evaluators</div>
+                    </div>
+                    
+                    <div class="review-item">
+                        <h4>Using Prior Data</h4>
+                        <div class="review-value">1</div>
+                        <div class="review-detail">Sarah Johnson (2025)</div>
+                    </div>
+                </div>
+                
+                <!-- READINESS CHECKLIST -->
+                <h3 style="margin: 40px 0 20px; color: #1e293b; font-size: 20px;">Setup Checklist</h3>
+                <div class="checklist">
+                    <div class="checklist-item">
+                        <div class="checklist-icon complete">✓</div>
+                        <div>
+                            <strong style="color: #1e293b;">Organization configured</strong>
+                            <div style="font-size: 13px; color: #64748b;">Family-Owned Business, Real Estate</div>
+                        </div>
+                    </div>
+                    
+                    <div class="checklist-item">
+                        <div class="checklist-icon complete">✓</div>
+                        <div>
+                            <strong style="color: #1e293b;">Directors added</strong>
+                            <div style="font-size: 13px; color: #64748b;">8 board members configured</div>
+                        </div>
+                    </div>
+                    
+                    <div class="checklist-item">
+                        <div class="checklist-icon complete">✓</div>
+                        <div>
+                            <strong style="color: #1e293b;">Competencies selected</strong>
+                            <div style="font-size: 13px; color: #64748b;">12 competencies configured with level of need</div>
+                        </div>
+                    </div>
+                    
+                    <div class="checklist-item">
+                        <div class="checklist-icon complete">✓</div>
+                        <div>
+                            <strong style="color: #1e293b;">Evaluators assigned</strong>
+                            <div style="font-size: 13px; color: #64748b;">64 evaluation assignments configured</div>
+                        </div>
+                    </div>
+                    
+                    <div class="checklist-item">
+                        <div class="checklist-icon incomplete">○</div>
+                        <div>
+                            <strong style="color: #64748b;">Calibration session (Recommended)</strong>
+                            <div style="font-size: 13px; color: #64748b;">Schedule a board calibration session to ensure consistent scoring</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="success-box" style="margin: 30px 0;">
+                    <strong>✓ Configuration Complete!</strong> You're ready to launch the evaluation. Evaluators will receive email invitations with instructions.
+                </div>
+                
+                <!-- LAUNCH BUTTONS -->
+                <div style="display: flex; gap: 15px; margin-top: 30px;">
+                    <button class="btn btn-primary btn-large">
+                        🚀 Launch Evaluation
+                    </button>
+                    <button class="btn btn-secondary btn-large">
+                        💾 Save as Draft
+                    </button>
+                    <button class="btn btn-secondary btn-large">
+                        📧 Preview Email Invitations
+                    </button>
+                </div>
+                
+                <div class="info-box" style="margin-top: 30px;">
+                    <strong>What happens next?</strong><br><br>
+                    When you launch:<br>
+                    • Email invitations sent to all evaluators<br>
+                    • Each evaluator receives a unique link to complete their evaluations<br>
+                    • Progress tracked in real-time on the admin dashboard<br>
+                    • Automated reminders sent to incomplete evaluators<br>
+                    • Board report generated when all evaluations are complete
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(index) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach((tab, i) => {
+                if (i === index) {
+                    tab.classList.add('active');
+                    contents[i].classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                    contents[i].classList.remove('active');
+                }
+            });
+        }
+        
+        function selectOrgType(element) {
+            document.querySelectorAll('.org-type-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+        
+        function showSpecialties() {
+            const industry = document.getElementById('industrySelect').value;
+            const specialtyDiv = document.getElementById('specialtySelection');
+            if (industry === 'real_estate') {
+                specialtyDiv.style.display = 'block';
+            } else {
+                specialtyDiv.style.display = 'none';
+            }
+        }
+        
+        function toggleCompetency(element) {
+            element.classList.toggle('selected');
+        }
+        
+        function selectLevelBox(element) {
+            element.closest('.box-selector').querySelectorAll('.box-option').forEach(box => {
+                box.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+        
+        function selectEvalBox(element) {
+            element.closest('.box-selector').querySelectorAll('.box-option').forEach(box => {
+                box.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+        
+        function applyAllToAll() {
+            alert('All-to-All assignment applied: Every evaluator will review every director (64 evaluations)');
+            document.getElementById('customAssignmentSection').style.display = 'none';
+        }
+        
+        function showCustomMatrix() {
+            document.getElementById('customAssignmentSection').style.display = 'block';
+        }
+        
+        function togglePriorEval(directorId, usePrior) {
+            const priorOptions = document.getElementById(directorId + '-prior-options');
+            const evaluators = document.getElementById(directorId + '-evaluators');
+            const card = priorOptions.closest('.director-assignment-card');
+            
+            if (usePrior) {
+                priorOptions.style.display = 'block';
+                evaluators.style.display = 'none';
+                card.classList.add('using-prior');
+            } else {
+                priorOptions.style.display = 'none';
+                evaluators.style.display = 'block';
+                card.classList.remove('using-prior');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hestia - Board Evaluation Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f8fafc;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #605C7F 0%, #302E3F 100%);
+            color: white;
+            padding: 30px 40px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .icon-square {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #D97757 0%, #C1543A 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .icon-h {
+            font-size: 32px;
+            font-weight: 900;
+            color: white;
+        }
+        
+        .logo-text {
+            font-size: 32px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+        
+        .tagline {
+            color: rgba(255,255,255,0.8);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 2px;
+        }
+        
+        .header-right {
+            text-align: right;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .report-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .report-controls label {
+            font-weight: 600;
+            color: #475569;
+        }
+        
+        .report-controls select {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px 20px;
+            margin-bottom: 30px;
+            border-radius: 4px;
+        }
+        
+        .info-box strong {
+            color: #1e40af;
+        }
+        
+        .competency-report-item {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .competency-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .competency-info {
+            flex: 1;
+        }
+        
+        .competency-info h3 {
+            font-size: 18px;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        
+        .competency-info p {
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+        
+        .competency-meta {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .badge {
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-level {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .badge-eval {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .classification-scale {
+            display: flex;
+            height: 50px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
+            position: relative;
+        }
+        
+        .scale-segment {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            color: #475569;
+            border-right: 1px solid #cbd5e1;
+            position: relative;
+        }
+        
+        .scale-segment:last-child {
+            border-right: none;
+        }
+        
+        /* Color scheme as specified */
+        .segment-absent {
+            background: #F8A37E; /* RGB(248, 163, 126) */
+        }
+        
+        .segment-uw4 {
+            background: #FAC1A9; /* RGB(250, 193, 169) */
+        }
+        
+        .segment-uw3 {
+            background: #FAC1A9; /* RGB(250, 193, 169) */
+        }
+        
+        .segment-uw2 {
+            background: #FCDFD3; /* RGB(252, 223, 211) */
+        }
+        
+        .segment-uw1 {
+            background: #FFFFFF; /* White */
+        }
+        
+        .segment-balanced {
+            background: #FFFFFF; /* White */
+        }
+        
+        .segment-ow1 {
+            background: #FFFFFF; /* White */
+        }
+        
+        .segment-ow2 {
+            background: #DAF0F3; /* RGB(218, 240, 243) */
+        }
+        
+        .segment-ow3 {
+            background: #B5E1E8; /* RGB(181, 225, 232) */
+        }
+        
+        .segment-ow4 {
+            background: #B5E1E8; /* RGB(181, 225, 232) */
+        }
+        
+        .scale-labels {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            margin-top: 8px;
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 600;
+        }
+        
+        .scale-label-underweight {
+            grid-column: 2;
+            text-align: left;
+            padding-left: 4px;
+        }
+        
+        .scale-label-balanced {
+            grid-column: 6;
+            text-align: center;
+        }
+        
+        .scale-label-overweight {
+            grid-column: 10;
+            text-align: right;
+            padding-right: 4px;
+        }
+        
+        .position-indicator {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        
+        .current-position {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #1e293b;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .future-position {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #1e293b;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        
+        .arrow-indicator {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            height: 2px;
+        }
+        
+        .arrow-line {
+            height: 3px;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #ef4444;
+        }
+        
+        .arrow-head {
+            position: absolute;
+            font-size: 20px;
+            font-weight: bold;
+            line-height: 1;
+            color: #ef4444;
+        }
+        
+        .category-section {
+            margin-bottom: 40px;
+        }
+        
+        .category-header {
+            background: #f1f5f9;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .category-header h2 {
+            font-size: 20px;
+            color: #1e293b;
+        }
+        
+        .legend {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .legend h3 {
+            font-size: 16px;
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+        
+        .legend-items {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .legend-symbol {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .summary-report {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .summary-report h2 {
+            font-size: 22px;
+            color: #1e293b;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-top: 20px;
+        }
+        
+        .summary-section {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #ef4444;
+        }
+        
+        .summary-section h3 {
+            font-size: 16px;
+            color: #1e293b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .summary-list {
+            list-style: none;
+        }
+        
+        .summary-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .summary-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .summary-competency-name {
+            font-weight: 500;
+            color: #1e293b;
+        }
+        
+        .summary-decline-badge {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .summary-status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-absent {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+        
+        .status-uw4 {
+            background: #FECACA;
+            color: #7F1D1D;
+        }
+        
+        .status-uw3 {
+            background: #FED7AA;
+            color: #9A3412;
+        }
+        
+        .status-uw2 {
+            background: #FEE8D6;
+            color: #92400E;
+        }
+        
+        .no-issues {
+            color: #64748b;
+            font-style: italic;
+            padding: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <div class="logo-container">
+                    <div class="icon-square">
+                        <div class="icon-h">H</div>
+                    </div>
+                    <div>
+                        <div class="logo-text">hestia</div>
+                        <div class="tagline">Board Evaluation</div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <h1>Board Competency Report</h1>
+                    <p>Current strengths & projected composition</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="report-controls">
+            <label>Compare current board to projected year:</label>
+            <select id="futureYearSelect" onchange="updateReport()">
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+                <option value="2029">2029</option>
+                <option value="2030">2030</option>
+            </select>
+        </div>
+        
+        <div class="info-box">
+            <strong>How to read this report:</strong> Each competency shows a classification scale from Absent (far left) through Underweight, Balanced, to Overweight (far right). 
+            The <strong>○ circle</strong> shows your current board position. The <strong>• dot</strong> shows the projected position after term expirations. 
+            Arrows indicate the direction of change. This helps identify which competencies will need focus in future board recruitment.
+        </div>
+        
+        <div id="summaryReport" class="summary-report">
+            <!-- Summary will be generated here -->
+        </div>
+        
+        <div class="legend">
+            <h3>Legend</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-symbol">
+                        <div class="current-position" style="width: 20px; height: 20px;"></div>
+                    </div>
+                    <span>Current Board Position</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-symbol">
+                        <div class="future-position" style="width: 12px; height: 12px;"></div>
+                    </div>
+                    <span>Future Board Position (after term expirations)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-symbol">
+                        <span style="color: #ef4444; font-size: 18px; font-weight: bold;">◀</span>
+                    </div>
+                    <span>Declining (competency getting weaker due to term expirations)</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="reportContent">
+            <!-- Report will be generated here -->
+        </div>
+    </div>
+    
+    <script>
+        // Sample data - in production this would come from the server
+        const currentYear = 2026;
+        
+        const directors = [
+            { id: "dir-001", name: "John Smith", currentTermExpires: 2028, maxTermExpires: 2030 },
+            { id: "dir-002", name: "Sarah Johnson", currentTermExpires: 2027, maxTermExpires: 2029 },
+            { id: "dir-003", name: "Michael Chen", currentTermExpires: 2029, maxTermExpires: 2031 },
+            { id: "dir-004", name: "Emily Rodriguez", currentTermExpires: 2027, maxTermExpires: 2029 },
+            { id: "dir-005", name: "David Williams", currentTermExpires: 2030, maxTermExpires: 2032 },
+            { id: "dir-006", name: "Lisa Anderson", currentTermExpires: 2028, maxTermExpires: 2030 }
+        ];
+        
+        const competencies = [
+            // Family Pulse
+            { id: "c1", name: "Family dynamics and politics", category: "Family Pulse", description: "Well networked, understands how the family thinks and responds, has influence with and trust of the family", levelOfNeed: "Medium", weight: 11 },
+            { id: "c2", name: "Knowledge of company history", category: "Family Pulse", description: "Knowledge of the key historical decisions, actions and milestones", levelOfNeed: "Medium", weight: 11 },
+            
+            // Board Efficacy
+            { id: "c3", name: "Strategic orientation", category: "Board Efficacy", description: "Having a long-term vision and translating that into deliberate and proactive decisions", levelOfNeed: "Medium-Heavy", weight: 15 },
+            { id: "c4", name: "Commercial orientation", category: "Board Efficacy", description: "Understanding of the business environment: customers, competitors, marketplace", levelOfNeed: "Medium", weight: 11 },
+            { id: "c5", name: "Results oriented", category: "Board Efficacy", description: "Knowing what results are important and focusing energy towards achieving those", levelOfNeed: "Medium", weight: 11 },
+            { id: "c6", name: "Vision and creativity", category: "Board Efficacy", description: "Seeing outcomes, possibilities, connections, or solutions beyond that which is known", levelOfNeed: "Medium", weight: 11 },
+            
+            // Industry Experience
+            { id: "c7", name: "Real estate transactions", category: "Industry Experience", description: "Understanding of real estate transactions and portfolio construction", levelOfNeed: "Medium-Heavy", weight: 15 },
+            { id: "c8", name: "Deal structures and financing", category: "Industry Experience", description: "Understanding contracts, market terms, capital formation", levelOfNeed: "Medium-Heavy", weight: 15 },
+            
+            // Functional Needs
+            { id: "c9", name: "Financial planning and valuation", category: "Functional Needs", description: "Forecasting, budgets, and valuation techniques", levelOfNeed: "Medium", weight: 11 },
+            { id: "c10", name: "Read/interpret financial statements", category: "Functional Needs", description: "Reading financial statements and drawing conclusions", levelOfNeed: "Medium-Heavy", weight: 15 },
+            { id: "c11", name: "Governance, processes, structures", category: "Functional Needs", description: "Establishing and monitoring policies and procedures", levelOfNeed: "Medium", weight: 11 }
+        ];
+        
+        // Simulated scores - in production, these would be calculated from actual evaluations
+        // For demo, we'll generate random scores
+        const directorScores = {};
+        directors.forEach(dir => {
+            directorScores[dir.id] = {};
+            competencies.forEach(comp => {
+                // Generate random score between 5-10
+                directorScores[dir.id][comp.id] = 5 + Math.random() * 5;
+            });
+        });
+        
+        // Scoring configuration
+        const config = {
+            thresholds: {
+                9: 5,
+                7: 3,
+                5: 1,
+                0: 0
+            },
+            classificationBands: {
+                ow4: 2.00,  // +200%
+                ow3: 0.50,  // +50%
+                ow2: 0.30,  // +30%
+                ow1: 0.10,  // +10%
+                uw1: -0.10, // -10%
+                uw2: -0.30, // -30%
+                uw3: -0.50, // -50%
+                uw4: -0.70  // -70%
+            }
+        };
+        
+        // Calculate board score for a competency
+        function calculateBoardScore(competencyId, activeDirectors) {
+            let score = 0;
+            
+            activeDirectors.forEach(dirId => {
+                const dirScore = directorScores[dirId][competencyId];
+                
+                if (dirScore >= 9) {
+                    score += config.thresholds[9];
+                } else if (dirScore >= 7) {
+                    score += config.thresholds[7];
+                } else if (dirScore >= 5) {
+                    score += config.thresholds[5];
+                } else {
+                    score += config.thresholds[0];
+                }
+            });
+            
+            return score;
+        }
+        
+        // Classify board score
+        function classifyScore(score, targetWeight) {
+            if (score === 0) return { level: 'absent', segment: 0 };
+            
+            const ratio = score / targetWeight;
+            
+            // Overweight
+            if (ratio >= (1 + config.classificationBands.ow4)) return { level: 'ow4', segment: 9 };
+            if (ratio >= (1 + config.classificationBands.ow3)) return { level: 'ow3', segment: 8 };
+            if (ratio >= (1 + config.classificationBands.ow2)) return { level: 'ow2', segment: 7 };
+            if (ratio >= (1 + config.classificationBands.ow1)) return { level: 'ow1', segment: 6 };
+            
+            // Balanced
+            if (ratio >= (1 + config.classificationBands.uw1)) return { level: 'balanced', segment: 5 };
+            
+            // Underweight
+            if (ratio >= (1 + config.classificationBands.uw2)) return { level: 'uw1', segment: 4 };
+            if (ratio >= (1 + config.classificationBands.uw3)) return { level: 'uw2', segment: 3 };
+            if (ratio >= (1 + config.classificationBands.uw4)) return { level: 'uw3', segment: 2 };
+            
+            return { level: 'uw4', segment: 1 };
+        }
+        
+        // Analyze board size health
+        function analyzeBoardSizeHealth(competencyAnalysis, boardSize) {
+            const underweightCount = competencyAnalysis.filter(c => 
+                ['uw4', 'uw3', 'uw2'].includes(c.currentClass.level)
+            ).length;
+            
+            const overweightCount = competencyAnalysis.filter(c => 
+                ['ow2', 'ow3', 'ow4'].includes(c.currentClass.level)
+            ).length;
+            
+            const balancedCount = competencyAnalysis.filter(c => 
+                ['balanced', 'uw1', 'ow1'].includes(c.currentClass.level)
+            ).length;
+            
+            const totalCompetencies = competencyAnalysis.length;
+            const uwPercentage = underweightCount / totalCompetencies;
+            const owPercentage = overweightCount / totalCompetencies;
+            
+            // Small board struggling
+            if (boardSize <= 6 && uwPercentage > 0.5) {
+                return {
+                    assessment: 'consider_expansion',
+                    message: `Your ${boardSize}-person board shows underweight in ${underweightCount} of ${totalCompetencies} competencies despite having talented directors. Consider whether expanding to ${boardSize + 2}-${boardSize + 3} directors would allow better competency coverage across your strategic priorities.`,
+                    icon: '💡'
+                };
+            }
+            
+            // Large board over-concentrated
+            if (boardSize >= 12 && owPercentage > 0.5) {
+                return {
+                    assessment: 'consider_reduction',
+                    message: `Your ${boardSize}-person board shows overweight in ${overweightCount} of ${totalCompetencies} competencies, suggesting over-concentration of expertise. Consider whether a more focused board of ${boardSize - 2}-${boardSize - 3} directors might be more effective by bringing more diverse competency profiles.`,
+                    icon: '⚠️'
+                };
+            }
+            
+            // Well-balanced
+            if (balancedCount / totalCompetencies > 0.6) {
+                return {
+                    assessment: 'optimal',
+                    message: `Your ${boardSize}-person board achieves balanced or near-balanced coverage across ${balancedCount} of ${totalCompetencies} competencies, suggesting the current board size is well-calibrated to your strategic needs.`,
+                    icon: '✓'
+                };
+            }
+            
+            return {
+                assessment: 'adequate',
+                message: null,
+                icon: null
+            };
+        }
+        
+        // Generate summary report
+        function generateSummary(competencyAnalysis, futureYear) {
+            const summaryDiv = document.getElementById('summaryReport');
+            
+            // Analyze board size health
+            const boardSize = directors.length;
+            const sizeHealth = analyzeBoardSizeHealth(competencyAnalysis, boardSize);
+            
+            // Find biggest decliners (top 5)
+            const decliners = competencyAnalysis
+                .filter(c => c.decline > 0)
+                .sort((a, b) => b.decline - a.decline)
+                .slice(0, 5);
+            
+            // Find future underweight competencies (UW2, UW3, UW4, Absent)
+            const futureUnderweight = competencyAnalysis
+                .filter(c => ['absent', 'uw4', 'uw3', 'uw2'].includes(c.futureClass.level))
+                .sort((a, b) => {
+                    // Sort by severity: absent first, then uw4, uw3, uw2
+                    const severity = { absent: 0, uw4: 1, uw3: 2, uw2: 3 };
+                    return severity[a.futureClass.level] - severity[b.futureClass.level];
+                });
+            
+            let html = `
+                <h2>🎯 Executive Summary - Recruiting Priorities for ${futureYear}</h2>
+            `;
+            
+            // Add board size health assessment if there's a message
+            if (sizeHealth.message) {
+                html += `
+                    <div class="info-box" style="margin-bottom: 20px; background: #f8fafc; border-left-color: ${sizeHealth.assessment === 'optimal' ? '#10b981' : '#3b82f6'};">
+                        <strong>${sizeHealth.icon} Board Size Consideration:</strong><br>
+                        ${sizeHealth.message}
+                    </div>
+                `;
+            }
+            
+            html += `<div class="summary-grid">
+                    <div class="summary-section">
+                        <h3>⚠️ Biggest Decliners</h3>
+                        <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">
+                            Competencies losing the most strength due to term expirations
+                        </p>
+            `;
+            
+            if (decliners.length > 0) {
+                html += '<ul class="summary-list">';
+                decliners.forEach(comp => {
+                    html += `
+                        <li>
+                            <span class="summary-competency-name">${comp.name}</span>
+                            <span class="summary-decline-badge">-${comp.decline.toFixed(1)} points</span>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+            } else {
+                html += '<p class="no-issues">✓ No significant declines projected</p>';
+            }
+            
+            html += `
+                    </div>
+                    <div class="summary-section">
+                        <h3>🔍 Future Underweight Competencies</h3>
+                        <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">
+                            Skills that will be deficient and require immediate recruiting focus
+                        </p>
+            `;
+            
+            if (futureUnderweight.length > 0) {
+                html += '<ul class="summary-list">';
+                futureUnderweight.forEach(comp => {
+                    const statusLabels = {
+                        absent: 'Absent',
+                        uw4: 'Critically Low',
+                        uw3: 'Very Low',
+                        uw2: 'Low'
+                    };
+                    html += `
+                        <li>
+                            <span class="summary-competency-name">${comp.name}</span>
+                            <span class="summary-status-badge status-${comp.futureClass.level}">
+                                ${statusLabels[comp.futureClass.level]}
+                            </span>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+            } else {
+                html += '<p class="no-issues">✓ No underweight competencies projected</p>';
+            }
+            
+            html += `
+                    </div>
+                </div>
+            `;
+            
+            summaryDiv.innerHTML = html;
+        }
+        
+        // Generate report
+        function updateReport() {
+            const futureYear = parseInt(document.getElementById('futureYearSelect').value);
+            const reportContent = document.getElementById('reportContent');
+            
+            // Determine which directors are active in future year
+            const currentDirectors = directors.map(d => d.id);
+            const futureDirectors = directors.filter(d => d.currentTermExpires > futureYear).map(d => d.id);
+            
+            // Calculate all competency scores and classifications
+            const competencyAnalysis = competencies.map(comp => {
+                const currentScore = calculateBoardScore(comp.id, currentDirectors);
+                const futureScore = calculateBoardScore(comp.id, futureDirectors);
+                const currentClass = classifyScore(currentScore, comp.weight);
+                const futureClass = classifyScore(futureScore, comp.weight);
+                const decline = currentScore - futureScore;
+                
+                return {
+                    ...comp,
+                    currentScore,
+                    futureScore,
+                    currentClass,
+                    futureClass,
+                    decline,
+                    isDecline: futureClass.segment < currentClass.segment
+                };
+            });
+            
+            // Generate summary report
+            generateSummary(competencyAnalysis, futureYear);
+            
+            // Group competencies by category
+            const categories = {};
+            competencies.forEach(comp => {
+                if (!categories[comp.category]) {
+                    categories[comp.category] = [];
+                }
+                categories[comp.category].push(comp);
+            });
+            
+            let html = '';
+            
+            for (const category in categories) {
+                html += `
+                    <div class="category-section">
+                        <div class="category-header">
+                            <h2>${category}</h2>
+                        </div>
+                `;
+                
+                categories[category].forEach(comp => {
+                    const currentScore = calculateBoardScore(comp.id, currentDirectors);
+                    const futureScore = calculateBoardScore(comp.id, futureDirectors);
+                    
+                    const currentClass = classifyScore(currentScore, comp.weight);
+                    const futureClass = classifyScore(futureScore, comp.weight);
+                    
+                    // Calculate positions (0-100%)
+                    const currentPosition = (currentClass.segment / 9) * 100;
+                    const futurePosition = (futureClass.segment / 9) * 100;
+                    
+                    // Only show arrow if declining (moving left)
+                    const isDecline = futureClass.segment < currentClass.segment;
+                    const arrowSymbol = '◀';
+                    
+                    // Calculate arrow positioning for decline
+                    let leftPosition, rightPosition, arrowWidth, arrowHeadPosition;
+                    
+                    if (isDecline) {
+                        // Moving left: start after dot, end before circle
+                        leftPosition = futurePosition + 1.5;
+                        rightPosition = currentPosition - 1.5;
+                        arrowWidth = rightPosition - leftPosition;
+                        arrowHeadPosition = leftPosition;
+                    }
+                    
+                    html += `
+                        <div class="competency-report-item">
+                            <div class="competency-header">
+                                <div class="competency-info">
+                                    <h3>${comp.name}</h3>
+                                    <p>${comp.description}</p>
+                                </div>
+                                <div class="competency-meta">
+                                    <span class="badge badge-level">${comp.levelOfNeed}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="classification-scale">
+                                <div class="scale-segment segment-absent">Absent</div>
+                                <div class="scale-segment segment-uw4"></div>
+                                <div class="scale-segment segment-uw3"></div>
+                                <div class="scale-segment segment-uw2"></div>
+                                <div class="scale-segment segment-uw1"></div>
+                                <div class="scale-segment segment-balanced"></div>
+                                <div class="scale-segment segment-ow1"></div>
+                                <div class="scale-segment segment-ow2"></div>
+                                <div class="scale-segment segment-ow3"></div>
+                                <div class="scale-segment segment-ow4"></div>
+                                
+                                <!-- Arrow line only if declining -->
+                                ${isDecline ? `
+                                    <div class="arrow-line trend-down" style="left: ${leftPosition}%; width: ${arrowWidth}%;"></div>
+                                    <div class="arrow-head trend-down" style="left: ${arrowHeadPosition}%; top: 50%; transform: translate(-50%, -50%);">
+                                        ${arrowSymbol}
+                                    </div>
+                                ` : ''}
+                                
+                                <!-- Current position (circle) -->
+                                <div class="position-indicator" style="left: ${currentPosition}%;">
+                                    <div class="current-position"></div>
+                                </div>
+                                
+                                <!-- Future position (dot) -->
+                                <div class="position-indicator" style="left: ${futurePosition}%;">
+                                    <div class="future-position"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="scale-labels">
+                                <div class="scale-label-underweight">Underweight</div>
+                                <div class="scale-label-balanced">Balanced</div>
+                                <div class="scale-label-overweight">Overweight</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            }
+            
+            reportContent.innerHTML = html;
+        }
+        
+        // Initialize report
+        updateReport();
+    </script>
+</body>
+</html>
