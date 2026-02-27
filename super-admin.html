@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Portal - Board Evaluation Platform</title>
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #0f172a;
+            color: white;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 30px;
+            border-bottom: 3px solid #D97757;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #94a3b8;
+            font-size: 16px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px solid #334155;
+        }
+        
+        .section h2 {
+            color: #D97757;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th {
+            background: #334155;
+            color: #e2e8f0;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #334155;
+            color: #cbd5e1;
+        }
+        
+        tr:hover {
+            background: #334155;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #D97757 0%, #C1543A 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(217, 119, 87, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #334155;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #475569;
+        }
+        
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid #475569;
+        }
+        
+        .stat-value {
+            font-size: 48px;
+            font-weight: 900;
+            color: #D97757;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: #94a3b8;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #D97757;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 2px solid #D97757;
+        }
+        
+        .modal h3 {
+            color: #D97757;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .badge-warning {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .badge-info {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔧 Super Admin Portal</h1>
+        <p>Manage all clients, evaluations, and system settings</p>
+    </div>
+    
+    <div class="container">
+        <!-- STATS DASHBOARD -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalOrgs">0</div>
+                <div class="stat-label">Total Clients</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalDirectors">0</div>
+                <div class="stat-label">Total Directors</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalEvals">0</div>
+                <div class="stat-label">Active Evaluations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalCompetencies">0</div>
+                <div class="stat-label">Competencies</div>
+            </div>
+        </div>
+        
+        <!-- CLIENT ORGANIZATIONS -->
+        <div class="section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>📊 Client Organizations</h2>
+                <button class="btn btn-primary" onclick="openModal('addOrgModal')">+ Add New Client</button>
+            </div>
+            
+            <div id="orgsList" class="loading">Loading organizations...</div>
+        </div>
+        
+        <!-- DIRECTORS MANAGEMENT -->
+        <div class="section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>👥 Recent Directors</h2>
+                <button class="btn btn-secondary" onclick="openModal('addDirectorModal')">+ Add Director</button>
+            </div>
+            
+            <div id="directorsList" class="loading">Loading directors...</div>
+        </div>
+    </div>
+    
+    <!-- ADD ORGANIZATION MODAL -->
+    <div id="addOrgModal" class="modal">
+        <div class="modal-content">
+            <h3>Add New Client Organization</h3>
+            
+            <form id="addOrgForm" onsubmit="addOrganization(event)">
+                <div class="form-group">
+                    <label>Company Name *</label>
+                    <input type="text" id="orgName" required placeholder="e.g., Smith Family Holdings">
+                </div>
+                
+                <div class="form-group">
+                    <label>Organization Type *</label>
+                    <select id="orgType" required>
+                        <option value="">Select type...</option>
+                        <option value="family_business">Family-Owned Business</option>
+                        <option value="nonprofit">Nonprofit</option>
+                        <option value="public_company">Public Company</option>
+                        <option value="private_company">Private Company</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Industry *</label>
+                    <select id="orgIndustry" required>
+                        <option value="">Select industry...</option>
+                        <option value="real_estate">Real Estate</option>
+                        <option value="technology">Technology</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="financial_services">Financial Services</option>
+                        <option value="manufacturing">Manufacturing</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button type="submit" class="btn btn-primary">Create Organization</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addOrgModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- ADD DIRECTOR MODAL -->
+    <div id="addDirectorModal" class="modal">
+        <div class="modal-content">
+            <h3>Add Director to Organization</h3>
+            
+            <form id="addDirectorForm" onsubmit="addDirector(event)">
+                <div class="form-group">
+                    <label>Select Organization *</label>
+                    <select id="directorOrgId" required>
+                        <option value="">Loading organizations...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Director Name *</label>
+                    <input type="text" id="directorName" required placeholder="e.g., John Smith">
+                </div>
+                
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="directorEmail" required placeholder="john.smith@example.com">
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button type="submit" class="btn btn-primary">Add Director</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addDirectorModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Wait for Supabase to initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadDashboard();
+        });
+        
+        async function loadDashboard() {
+            try {
+                // Load stats
+                await loadStats();
+                
+                // Load organizations list
+                await loadOrganizations();
+                
+                // Load directors
+                await loadDirectors();
+                
+                // Populate org dropdown in director form
+                await populateOrgDropdown();
+                
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                alert('Error loading dashboard. Check console for details.');
+            }
+        }
+        
+        async function loadStats() {
+            // Get counts from database
+            const { data: orgs } = await supabase.from('organizations').select('id', { count: 'exact', head: true });
+            const { data: dirs } = await supabase.from('directors').select('id', { count: 'exact', head: true });
+            const { data: evals } = await supabase.from('evaluations').select('id', { count: 'exact', head: true });
+            const { data: comps } = await supabase.from('competencies').select('id', { count: 'exact', head: true });
+            
+            document.getElementById('totalOrgs').textContent = orgs?.length || 0;
+            document.getElementById('totalDirectors').textContent = dirs?.length || 0;
+            document.getElementById('totalEvals').textContent = evals?.length || 0;
+            document.getElementById('totalCompetencies').textContent = comps?.length || 0;
+        }
+        
+        async function loadOrganizations() {
+            const { data: orgs, error } = await supabase
+                .from('organizations')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) {
+                document.getElementById('orgsList').innerHTML = `<p style="color: #ef4444;">Error: ${error.message}</p>`;
+                return;
+            }
+            
+            if (!orgs || orgs.length === 0) {
+                document.getElementById('orgsList').innerHTML = `
+                    <p style="color: #94a3b8; text-align: center; padding: 40px;">
+                        No organizations yet. Click "+ Add New Client" to get started.
+                    </p>
+                `;
+                return;
+            }
+            
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Company Name</th>
+                            <th>Type</th>
+                            <th>Industry</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${orgs.map(org => `
+                            <tr>
+                                <td><strong>${org.name}</strong></td>
+                                <td><span class="badge badge-info">${org.org_type.replace('_', ' ')}</span></td>
+                                <td>${org.industry || 'Not specified'}</td>
+                                <td>${new Date(org.created_at).toLocaleDateString()}</td>
+                                <td>
+                                    <button class="btn btn-secondary" style="padding: 8px 16px; font-size: 12px;" 
+                                            onclick="viewOrg('${org.id}')">View Details</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('orgsList').innerHTML = html;
+        }
+        
+        async function loadDirectors() {
+            const { data: directors, error } = await supabase
+                .from('directors')
+                .select(`
+                    *,
+                    organizations (name)
+                `)
+                .eq('is_active', true)
+                .order('created_at', { ascending: false })
+                .limit(20);
+            
+            if (error) {
+                document.getElementById('directorsList').innerHTML = `<p style="color: #ef4444;">Error: ${error.message}</p>`;
+                return;
+            }
+            
+            if (!directors || directors.length === 0) {
+                document.getElementById('directorsList').innerHTML = `
+                    <p style="color: #94a3b8; text-align: center; padding: 40px;">
+                        No directors yet.
+                    </p>
+                `;
+                return;
+            }
+            
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Organization</th>
+                            <th>Added</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${directors.map(dir => `
+                            <tr>
+                                <td><strong>${dir.name}</strong></td>
+                                <td>${dir.email}</td>
+                                <td>${dir.organizations?.name || 'Unknown'}</td>
+                                <td>${new Date(dir.created_at).toLocaleDateString()}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            document.getElementById('directorsList').innerHTML = html;
+        }
+        
+        async function populateOrgDropdown() {
+            const { data: orgs } = await supabase
+                .from('organizations')
+                .select('id, name')
+                .order('name');
+            
+            const dropdown = document.getElementById('directorOrgId');
+            dropdown.innerHTML = '<option value="">Select organization...</option>' +
+                orgs.map(org => `<option value="${org.id}">${org.name}</option>`).join('');
+        }
+        
+        async function addOrganization(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('orgName').value;
+            const orgType = document.getElementById('orgType').value;
+            const industry = document.getElementById('orgIndustry').value;
+            
+            const { data, error } = await supabase
+                .from('organizations')
+                .insert({
+                    name,
+                    org_type: orgType,
+                    industry
+                })
+                .select()
+                .single();
+            
+            if (error) {
+                alert('Error creating organization: ' + error.message);
+                return;
+            }
+            
+            alert('✓ Organization created successfully!');
+            closeModal('addOrgModal');
+            document.getElementById('addOrgForm').reset();
+            await loadDashboard();
+        }
+        
+        async function addDirector(event) {
+            event.preventDefault();
+            
+            const orgId = document.getElementById('directorOrgId').value;
+            const name = document.getElementById('directorName').value;
+            const email = document.getElementById('directorEmail').value;
+            
+            const { data, error } = await supabase
+                .from('directors')
+                .insert({
+                    organization_id: orgId,
+                    name,
+                    email,
+                    is_active: true
+                })
+                .select()
+                .single();
+            
+            if (error) {
+                alert('Error adding director: ' + error.message);
+                return;
+            }
+            
+            alert('✓ Director added successfully!');
+            closeModal('addDirectorModal');
+            document.getElementById('addDirectorForm').reset();
+            await loadDashboard();
+        }
+        
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        function viewOrg(orgId) {
+            // TODO: Navigate to detailed org view
+            alert('Organization details page coming soon!\n\nOrg ID: ' + orgId);
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>
