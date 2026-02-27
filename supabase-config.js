@@ -14,7 +14,7 @@ const SUPABASE_CONFIG = {
 // INITIALIZE SUPABASE CLIENT
 // ============================================================================
 // This creates a connection to your database
-const supabase = window.supabase.createClient(
+const supabaseClient = window.supabase.createClient(
   SUPABASE_CONFIG.url,
   SUPABASE_CONFIG.anonKey
 );
@@ -26,7 +26,7 @@ const supabase = window.supabase.createClient(
 const db = {
   // GET COMPETENCIES
   async getCompetencies() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('competencies')
       .select('*')
       .order('category', { ascending: true })
@@ -41,7 +41,7 @@ const db = {
 
   // GET DIRECTORS FOR AN ORGANIZATION
   async getDirectors(organizationId) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('directors')
       .select('*')
       .eq('organization_id', organizationId)
@@ -57,7 +57,7 @@ const db = {
 
   // GET EVALUATION BY YEAR
   async getEvaluation(organizationId, year) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('evaluations')
       .select('*')
       .eq('organization_id', organizationId)
@@ -73,7 +73,7 @@ const db = {
 
   // CREATE NEW EVALUATION
   async createEvaluation(organizationId, year) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('evaluations')
       .insert({
         organization_id: organizationId,
@@ -92,7 +92,7 @@ const db = {
 
   // ADD COMPETENCY TO EVALUATION
   async addCompetencyToEvaluation(evaluationId, organizationId, competencyId, levelOfNeed, evaluatedBy) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('organization_competencies')
       .insert({
         organization_id: organizationId,
@@ -113,7 +113,7 @@ const db = {
 
   // GET SELECTED COMPETENCIES FOR AN EVALUATION
   async getEvaluationCompetencies(evaluationId) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('organization_competencies')
       .select(`
         *,
@@ -131,7 +131,7 @@ const db = {
 
   // SAVE SCORE
   async saveScore(evaluationId, directorId, competencyId, evaluatorId, score, isNA = false, isSelf = false) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('scores')
       .upsert({
         evaluation_id: evaluationId,
@@ -156,7 +156,7 @@ const db = {
 
   // GET SCORES FOR A DIRECTOR
   async getDirectorScores(evaluationId, directorId) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('scores')
       .select(`
         *,
@@ -175,7 +175,7 @@ const db = {
 
   // GET ALL SCORES FOR AN EVALUATION (for board report)
   async getEvaluationScores(evaluationId) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('scores')
       .select(`
         *,
@@ -194,7 +194,7 @@ const db = {
 
   // GET AGGREGATE SCORES (uses the view we created)
   async getDirectorCompetencyScores(evaluationId) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('director_competency_scores')
       .select('*')
       .eq('evaluation_id', evaluationId);
@@ -208,7 +208,7 @@ const db = {
 
   // GET BOARD-WIDE AVERAGES (uses the view we created)
   async getBoardAverages(evaluationId) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('board_competency_averages')
       .select('*')
       .eq('evaluation_id', evaluationId);
@@ -228,7 +228,7 @@ const db = {
 const auth = {
   // Sign in with email/password
   async signIn(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
       email,
       password
     });
@@ -242,13 +242,13 @@ const auth = {
 
   // Sign out
   async signOut() {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabaseClient.auth.signOut();
     if (error) console.error('Sign out error:', error);
   },
 
   // Get current user
   async getCurrentUser() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabaseClient.auth.getUser();
     return user;
   },
 
