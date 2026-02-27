@@ -384,16 +384,12 @@
         }
         
         async function loadStats() {
-            // Get counts from database
-            const { data: orgs } = await supabase.from('organizations').select('id', { count: 'exact', head: true });
-            const { data: dirs } = await supabase.from('directors').select('id', { count: 'exact', head: true });
-            const { data: evals } = await supabase.from('evaluations').select('id', { count: 'exact', head: true });
-            const { data: comps } = await supabase.from('competencies').select('id', { count: 'exact', head: true });
+            const counts = await db.getCounts();
             
-            document.getElementById('totalOrgs').textContent = orgs?.length || 0;
-            document.getElementById('totalDirectors').textContent = dirs?.length || 0;
-            document.getElementById('totalEvals').textContent = evals?.length || 0;
-            document.getElementById('totalCompetencies').textContent = comps?.length || 0;
+            document.getElementById('totalOrgs').textContent = counts.organizations;
+            document.getElementById('totalDirectors').textContent = counts.directors;
+            document.getElementById('totalEvals').textContent = counts.evaluations;
+            document.getElementById('totalCompetencies').textContent = counts.competencies;
         }
         
         async function loadOrganizations() {
