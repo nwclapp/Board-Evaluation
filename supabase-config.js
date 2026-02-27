@@ -4,6 +4,7 @@
 // Replace these values with your actual Supabase credentials
 // Find them at: Settings → API in your Supabase dashboard
 
+
 const SUPABASE_CONFIG = {
   url: 'https://tvhuoegglhkisservgmu.supabase.co',        // e.g., 'https://abc123.supabase.co'
   anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2aHVvZWdnbGhraXNzZXJ2Z211Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NzY3NzIsImV4cCI6MjA4NzU1Mjc3Mn0._qp__qNjoXBY1JItn3MW708RHXtdgCZB6PegZUtDzyY' // The long eyJhbG... string
