@@ -384,24 +384,20 @@
         }
         
         async function loadStats() {
-            const counts = await db.getCounts();
+            // Get counts from database
+            const { data: orgs } = await supabase.from('organizations').select('id', { count: 'exact', head: true });
+            const { data: dirs } = await supabase.from('directors').select('id', { count: 'exact', head: true });
+            const { data: evals } = await supabase.from('evaluations').select('id', { count: 'exact', head: true });
+            const { data: comps } = await supabase.from('competencies').select('id', { count: 'exact', head: true });
             
-            document.getElementById('totalOrgs').textContent = counts.organizations;
-            document.getElementById('totalDirectors').textContent = counts.directors;
-            document.getElementById('totalEvals').textContent = counts.evaluations;
-            document.getElementById('totalCompetencies').textContent = counts.competencies;
+            document.getElementById('totalOrgs').textContent = orgs?.length || 0;
+            document.getElementById('totalDirectors').textContent = dirs?.length || 0;
+            document.getElementById('totalEvals').textContent = evals?.length || 0;
+            document.getElementById('totalCompetencies').textContent = comps?.length || 0;
         }
         
         async function loadOrganizations() {
-            const { data: orgs, error } = await supabase
-                .from('organizations')
-                .select('*')
-                .order('created_at', { ascending: false });
-            
-            if (error) {
-                document.getElementById('orgsList').innerHTML = `<p style="color: #ef4444;">Error: ${error.message}</p>`;
-                return;
-            }
+            const orgs = await db.getOrganizations();
             
             if (!orgs || orgs.length === 0) {
                 document.getElementById('orgsList').innerHTML = `
@@ -444,20 +440,7 @@
         }
         
         async function loadDirectors() {
-            const { data: directors, error } = await supabase
-                .from('directors')
-                .select(`
-                    *,
-                    organizations (name)
-                `)
-                .eq('is_active', true)
-                .order('created_at', { ascending: false })
-                .limit(20);
-            
-            if (error) {
-                document.getElementById('directorsList').innerHTML = `<p style="color: #ef4444;">Error: ${error.message}</p>`;
-                return;
-            }
+            const directors = await db.getAllDirectors();
             
             if (!directors || directors.length === 0) {
                 document.getElementById('directorsList').innerHTML = `
@@ -495,10 +478,7 @@
         }
         
         async function populateOrgDropdown() {
-            const { data: orgs } = await supabase
-                .from('organizations')
-                .select('id, name')
-                .order('name');
+            const orgs = await db.getOrganizations();
             
             const dropdown = document.getElementById('directorOrgId');
             dropdown.innerHTML = '<option value="">Select organization...</option>' +
@@ -512,25 +492,15 @@
             const orgType = document.getElementById('orgType').value;
             const industry = document.getElementById('orgIndustry').value;
             
-            const { data, error } = await supabase
-                .from('organizations')
-                .insert({
-                    name,
-                    org_type: orgType,
-                    industry
-                })
-                .select()
-                .single();
-            
-            if (error) {
+            try {
+                const data = await db.createOrganization(name, orgType, industry);
+                alert('✓ Organization created successfully!');
+                closeModal('addOrgModal');
+                document.getElementById('addOrgForm').reset();
+                await loadDashboard();
+            } catch (error) {
                 alert('Error creating organization: ' + error.message);
-                return;
             }
-            
-            alert('✓ Organization created successfully!');
-            closeModal('addOrgModal');
-            document.getElementById('addOrgForm').reset();
-            await loadDashboard();
         }
         
         async function addDirector(event) {
@@ -540,26 +510,15 @@
             const name = document.getElementById('directorName').value;
             const email = document.getElementById('directorEmail').value;
             
-            const { data, error } = await supabase
-                .from('directors')
-                .insert({
-                    organization_id: orgId,
-                    name,
-                    email,
-                    is_active: true
-                })
-                .select()
-                .single();
-            
-            if (error) {
+            try {
+                const data = await db.createDirector(orgId, name, email);
+                alert('✓ Director added successfully!');
+                closeModal('addDirectorModal');
+                document.getElementById('addDirectorForm').reset();
+                await loadDashboard();
+            } catch (error) {
                 alert('Error adding director: ' + error.message);
-                return;
             }
-            
-            alert('✓ Director added successfully!');
-            closeModal('addDirectorModal');
-            document.getElementById('addDirectorForm').reset();
-            await loadDashboard();
         }
         
         function openModal(modalId) {
