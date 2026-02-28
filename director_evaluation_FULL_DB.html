@@ -1,0 +1,2137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Board Evaluation - Director Assessment</title>
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow-x: hidden;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f5f7fa;
+            line-height: 1.6;
+            padding-top: var(--header-height, 85px);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #605C7F 0%, #302E3F 100%);
+            color: white;
+            padding: 12px 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .director-nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 8px 0 5px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        
+        .director-nav-button {
+            flex: 1;
+            min-width: 120px;
+            padding: 6px 10px; /* Reduced from 10px 12px */
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px; /* Reduced from 13px */
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .director-nav-button:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.5);
+        }
+        
+        .director-nav-button.active {
+            background: rgba(255,255,255,0.3);
+            border-color: #FEBC11;
+            border-width: 3px;
+            font-weight: 600;
+        }
+        
+        .director-nav-button .progress-fill-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 100%;
+            background: rgba(16, 185, 129, 0.4);
+            transition: width 0.3s ease;
+            z-index: 0;
+        }
+        
+        .director-nav-button .button-text {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .director-nav-button .completion-badge {
+            font-size: 10px;
+            opacity: 0.8;
+            margin-left: 5px;
+        }
+        
+        .review-nav-button {
+            padding: 6px 12px; /* Reduced from 10px 16px */
+            border: 2px solid rgba(255,255,255,0.5);
+            background: rgba(16, 185, 129, 0.3);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px; /* Reduced from 13px */
+            font-weight: 600;
+        }
+        
+        .review-nav-button:hover {
+            background: rgba(16, 185, 129, 0.5);
+            border-color: white;
+        }
+        
+        .header h1 {
+            font-size: 18px; /* Reduced from 24px */
+            margin-bottom: 2px; /* Reduced from 5px */
+            margin-top: 0;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 12px; /* Reduced from 14px */
+            margin: 0;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .icon-square {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #D97757 0%, #C1543A 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .icon-h {
+            font-size: 24px;
+            font-weight: 900;
+            color: white;
+        }
+        
+        .logo-text-container {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logo-text {
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            line-height: 1;
+        }
+        
+        .tagline {
+            color: rgba(255,255,255,0.75);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 2px;
+        }
+        
+        .progress-bar {
+            background: rgba(255,255,255,0.2);
+            height: 3px; /* Reduced from 6px */
+            border-radius: 2px; /* Reduced from 3px */
+            overflow: hidden;
+            margin-top: 8px; /* Reduced from 15px */
+        }
+        
+        .progress-fill {
+            background: white;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .save-indicator {
+            background: rgba(16, 185, 129, 0.2);
+            color: white;
+            padding: 4px 10px; /* Reduced from 6px 12px */
+            border-radius: 20px;
+            font-size: 11px; /* Reduced from 13px */
+            display: flex;
+            align-items: center;
+            gap: 5px; /* Reduced from 6px */
+        }
+        
+        .save-indicator.saving {
+            background: rgba(251, 191, 36, 0.2);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+            position: relative;
+            height: auto; /* Ensure container doesn't constrain sticky */
+        }
+        
+        .welcome-screen {
+            background: white;
+            padding: 50px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 700px;
+            margin: 40px auto;
+        }
+        
+        .welcome-screen h2 {
+            font-size: 28px;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+        
+        .welcome-screen p {
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+        
+        .welcome-screen .info-list {
+            text-align: left;
+            margin: 30px 0;
+            background: #f8fafc;
+            padding: 25px;
+            border-radius: 8px;
+        }
+        
+        .welcome-screen .info-list li {
+            margin: 12px 0;
+            color: #475569;
+        }
+        
+        .evaluation-screen {
+            display: none;
+        }
+        
+        .evaluation-screen.active {
+            display: block;
+        }
+        
+        .director-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative; /* Ensure proper stacking context */
+        }
+        
+        .director-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .director-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #667eea;
+        }
+        
+        .director-photo-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 28px;
+            border: 3px solid #667eea;
+        }
+        
+        .director-info h2 {
+            font-size: 24px;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+        
+        .director-info .subtitle {
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .competency-section {
+            margin-bottom: 40px;
+            position: relative; /* Create containing block for sticky */
+        }
+        
+        .category-header {
+            background: #f1f5f9;
+            padding: 12px 20px;
+            border-radius: 0;
+            margin-bottom: 20px;
+            margin-left: -30px;
+            margin-right: -30px;
+            padding-left: 50px;
+            padding-right: 50px;
+            font-weight: 600;
+            color: #475569;
+            font-size: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0; /* 0 because body padding already shifts everything down */
+            z-index: 60;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .competency-item {
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        
+        .competency-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+        
+        .competency-item.disabled {
+            opacity: 0.5;
+            background: #f8fafc;
+        }
+        
+        .competency-item.disabled:hover {
+            border-color: #e2e8f0;
+            box-shadow: none;
+        }
+        
+        .competency-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .competency-title {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+        
+        .competency-title h4 {
+            font-size: 15px;
+            color: #1e293b;
+            cursor: help;
+            margin: 0;
+            position: relative;
+        }
+        
+        .competency-description-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background: #1e293b;
+            color: white;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: normal;
+            line-height: 1.5;
+            margin-bottom: 8px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 100;
+            max-width: 350px;
+            white-space: normal;
+        }
+        
+        .competency-description-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 20px;
+            border: 5px solid transparent;
+            border-top-color: #1e293b;
+        }
+        
+        .competency-title h4:hover .competency-description-tooltip,
+        .competency-title h4:active .competency-description-tooltip {
+            opacity: 1;
+        }
+        
+        .eval-type-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid #1e293b;
+            background: white;
+            display: flex;
+            flex-shrink: 0;
+            position: relative;
+            cursor: help;
+            z-index: 2;
+        }
+        
+        .eval-type-icon::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border: 2px solid #1e293b;
+            border-radius: 50%;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .eval-type-icon .half {
+            width: 50%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #1e293b;
+            transition: background-color 0.2s;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .eval-type-icon .half.left {
+            border-right: 1px solid #1e293b;
+            border-radius: 50% 0 0 50%;
+        }
+        
+        .eval-type-icon .half.right {
+            border-radius: 0 50% 50% 0;
+        }
+        
+        .eval-type-icon .half.active {
+            background: #FEBC11;
+        }
+        
+        .eval-type-icon .half.inactive {
+            background: white;
+            color: #1e293b;
+        }
+        
+        .eval-type-icon .half.disabled {
+            background: white;
+            color: #cbd5e1;
+        }
+        
+        .eval-type-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            margin-bottom: 8px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 100;
+            font-weight: normal;
+        }
+        
+        .eval-type-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #1e293b;
+        }
+        
+        .eval-type-icon:hover .eval-type-tooltip,
+        .eval-type-icon:active .eval-type-tooltip {
+            opacity: 1;
+        }
+        
+        .score-slider-container {
+            margin-top: 10px;
+        }
+        
+        .slider-wrapper {
+            position: relative;
+            padding: 10px 0;
+        }
+        
+        .slider-track {
+            display: flex;
+            height: 40px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 2px solid #cbd5e1;
+            margin-bottom: 8px;
+        }
+        
+        .slider-box {
+            flex: 1;
+            border-right: 2px solid white;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: #475569;
+        }
+        
+        .slider-box:last-child {
+            border-right: none;
+        }
+        
+        .slider-box:hover {
+            transform: scaleY(1.1);
+            z-index: 5;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .slider-box.selected {
+            box-shadow: inset 0 0 0 3px #667eea;
+            transform: scaleY(1.05);
+            z-index: 10;
+        }
+        
+        /* Color gradient from dark orange (1) to white (6) to blue (10) */
+        .slider-box.score-1 { background: #E07A3E; } /* Darkest orange - 2x the intensity of score 2 */
+        .slider-box.score-2 { background: #F8A37E; } /* Base orange - matches current classification */
+        .slider-box.score-3 { background: #FAB89A; }
+        .slider-box.score-4 { background: #FCCDB6; }
+        .slider-box.score-5 { background: #FEE2D3; }
+        .slider-box.score-6 { background: #FFFFFF; } /* White - balanced */
+        .slider-box.score-7 { background: #DAF0F3; } /* Light blue */
+        .slider-box.score-8 { background: #B5E1E8; } /* Medium blue */
+        .slider-box.score-9 { background: #90D2DC; }
+        .slider-box.score-10 { background: #6BC3D0; } /* Darkest blue - matches classification */
+        
+        .slider-box.selected .box-number {
+            color: #667eea;
+            font-size: 16px;
+        }
+        
+        .score-slider {
+            display: none; /* Hide the native slider, use boxes instead */
+        }
+        
+        .slider-labels {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            margin-top: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            position: relative;
+        }
+        
+        .slider-labels .label-absent,
+        .slider-labels .label-developing,
+        .slider-labels .label-proficient,
+        .slider-labels .label-expert {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+        }
+        
+        .slider-labels .label-absent {
+            grid-column: 1;
+        }
+        
+        .slider-labels .label-developing {
+            grid-column: 2 / 5; /* Span boxes 2-4 */
+        }
+        
+        .slider-labels .label-proficient {
+            grid-column: 5 / 8; /* Span boxes 5-7 */
+        }
+        
+        .slider-labels .label-expert {
+            grid-column: 8 / 11; /* Span boxes 8-10 */
+        }
+        
+        .slider-labels .divider {
+            position: absolute;
+            top: -3px;
+            bottom: -3px;
+            width: 1px;
+            background: #cbd5e1;
+        }
+        
+        .slider-labels .divider-1 {
+            left: calc(10% - 0.5px); /* After box 1 */
+        }
+        
+        .slider-labels .divider-2 {
+            left: calc(40% - 0.5px); /* After box 4 */
+        }
+        
+        .slider-labels .divider-3 {
+            left: calc(70% - 0.5px); /* After box 7 */
+        }
+        
+        .tier-labels {
+            display: none;
+        }
+        
+        .scoring-guidance {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #475569;
+        }
+        
+        .scoring-guidance.hidden {
+            display: none;
+        }
+        
+        .scoring-guidance strong {
+            color: #1e293b;
+        }
+        
+        .score-display {
+            display: none; /* Remove the score display entirely */
+        }
+        
+        .score-value-display {
+            display: none;
+        }
+        
+        .na-checkbox-container {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 5px;
+        }
+        
+        .na-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #64748b;
+            width: 10%; /* Align with first box */
+            white-space: nowrap;
+        }
+        
+        .na-checkbox input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .rating-scale {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 15px;
+        }
+        
+        .rating-button {
+            flex: 1;
+            padding: 12px 8px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+            text-align: center;
+        }
+        
+        .rating-button:hover:not(:disabled) {
+            border-color: #667eea;
+            background: #f8fafc;
+        }
+        
+        .rating-button.selected {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+        
+        .rating-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+        
+        .rating-button.na-button {
+            flex: 1.5;
+            background: #f8fafc;
+            font-size: 12px;
+        }
+        
+        .rating-button.na-button.selected {
+            background: #94a3b8;
+            border-color: #94a3b8;
+            color: white;
+        }
+        
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e2e8f0;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+            font-size: 16px;
+            padding: 14px 30px;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+        
+        .review-screen {
+            display: none;
+        }
+        
+        .review-screen.active {
+            display: block;
+        }
+        
+        .review-header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .review-header h2 {
+            font-size: 26px;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        
+        .review-header p {
+            color: #64748b;
+            font-size: 15px;
+        }
+        
+        .heatmap-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        
+        .heatmap-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        
+        .heatmap-table th {
+            background: #f1f5f9;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .heatmap-table th.competency-header {
+            text-align: left;
+            min-width: 200px;
+            position: sticky;
+            left: 0;
+            background: #f1f5f9;
+            z-index: 20;
+        }
+        
+        .director-name-row {
+            background: #e0e7ff;
+        }
+        
+        .director-name-row td {
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .director-name-row td:hover {
+            background: #c7d2fe;
+            color: #667eea;
+        }
+        
+        .director-name-row td.competency-label {
+            cursor: default;
+            background: #e0e7ff;
+            position: sticky;
+            left: 0;
+            z-index: 15;
+        }
+        
+        .director-name-row td.competency-label:hover {
+            background: #e0e7ff;
+            color: #475569;
+        }
+        
+        .director-photo-row {
+            background: #f1f5f9;
+        }
+        
+        .director-photo-row td {
+            padding: 12px 8px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+        }
+        
+        .director-photo-row td:hover {
+            background: #e2e8f0;
+        }
+        
+        .director-photo-row td.competency-label {
+            cursor: default;
+            background: #f1f5f9;
+            position: sticky;
+            left: 0;
+            z-index: 15;
+        }
+        
+        .director-photo-row td.competency-label:hover {
+            background: #f1f5f9;
+        }
+        
+        .heatmap-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #cbd5e1;
+            display: inline-block;
+        }
+        
+        .heatmap-photo-placeholder {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            border: 2px solid #cbd5e1;
+        }
+        
+        .heatmap-table td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .heatmap-table td.competency-name {
+            text-align: left;
+            font-weight: 500;
+            color: #1e293b;
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 10;
+        }
+        
+        .heatmap-table td.score-cell:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 5;
+        }
+        
+        .score-value {
+            font-weight: 600;
+            padding: 6px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            min-width: 35px;
+        }
+        
+        .category-row {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .category-row td {
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+        
+        .legend-color {
+            width: 30px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #1e40af;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .modal-content h3 {
+            font-size: 20px;
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+        
+        .modal-content p {
+            color: #64748b;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .description-modal .modal-content {
+            max-width: 500px;
+        }
+        
+        .description-modal h3 {
+            color: #667eea;
+        }
+        
+        .edit-score-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 16px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .success-screen {
+            display: none;
+            text-align: center;
+            padding: 50px 20px;
+        }
+        
+        .success-screen.active {
+            display: block;
+        }
+        
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        .success-screen h2 {
+            font-size: 32px;
+            color: #10b981;
+            margin-bottom: 15px;
+        }
+        
+        .success-screen p {
+            font-size: 16px;
+            color: #64748b;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo-container">
+                <div class="icon-square">
+                    <div class="icon-h">H</div>
+                </div>
+                <div class="logo-text-container">
+                    <div class="logo-text">hestia</div>
+                    <div class="tagline">Board Evaluation</div>
+                </div>
+            </div>
+            <div class="save-indicator" id="saveIndicator">
+                <span id="saveIcon">✓</span>
+                <span id="saveText">All changes saved</span>
+            </div>
+        </div>
+        <div class="director-nav" id="directorNav" style="display: none;">
+            <!-- Director navigation buttons will be inserted here -->
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- WELCOME SCREEN -->
+        <div class="welcome-screen" id="welcomeScreen">
+            <h2>Welcome to Your Board Evaluation</h2>
+            <p>Thank you for participating in this evaluation. Your honest and thoughtful input will help strengthen our board's effectiveness.</p>
+            
+            <div style="background: #f0fdf4; border: 2px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 8px; text-align: center;">
+                <strong style="color: #065f46; font-size: 16px;">Evaluating as: <span id="evaluatorNameDisplay">Loading...</span></strong>
+            </div>
+            
+            <div class="info-list">
+                <h3 style="margin-bottom: 15px; color: #1e293b;">Before you begin:</h3>
+                <ul>
+                    <li><strong>Calibration is critical:</strong> If your board has not held a calibration session to align on scoring standards, we strongly recommend doing so before individual evaluations. This ensures consistency across all evaluators.</li>
+                    <li>You will evaluate each board member on specific competencies using a 1-10 scale</li>
+                    <li>Scores are grouped into three tiers: Developing (2-4), Proficient (5-7), Expert (8-10)</li>
+                    <li>Click any competency name to see its full definition and scoring guidance</li>
+                    <li>Your progress is automatically saved - you can leave and return anytime</li>
+                    <li>At the end, you'll review all your scores before submitting</li>
+                    <li>This evaluation takes approximately <strong><span id="estimatedTime">30</span> minutes</strong></li>
+                </ul>
+            </div>
+            
+            <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <strong style="color: #1e40af;">Scoring System Overview:</strong><br>
+                <div style="margin-top: 10px; font-size: 14px; color: #1e293b; line-height: 1.8;">
+                    <strong>0:</strong> Not enough exposure to answer<br>
+                    <strong>1:</strong> Absent / does not possess this competency<br>
+                    <strong>2-4 (Developing):</strong> Foundational understanding but limited contribution<br>
+                    <strong>5-7 (Proficient):</strong> Competent contributor who adds value<br>
+                    <strong>8-10 (Expert):</strong> Recognized authority whose expertise elevates the board
+                </div>
+            </div>
+            
+            <label style="display: flex; align-items: center; gap: 10px; margin: 20px 0; cursor: pointer;">
+                <input type="checkbox" id="showScoringGuidance" checked style="width: 18px; height: 18px;">
+                <span style="font-size: 14px;">Show detailed scoring guidance during evaluation (recommended for first use)</span>
+            </label>
+            
+            <button class="btn btn-primary" onclick="startEvaluation()" style="margin-top: 20px; font-size: 16px; padding: 14px 30px;">
+                Begin Evaluation →
+            </button>
+        </div>
+        
+        <!-- EVALUATION SCREEN -->
+        <div class="evaluation-screen" id="evaluationScreen">
+            <div class="director-card" id="directorCard">
+                <!-- Director content will be inserted here -->
+            </div>
+        </div>
+        
+        <!-- REVIEW SCREEN -->
+        <div class="review-screen" id="reviewScreen">
+            <div class="review-header">
+                <h2>Review Your Evaluation</h2>
+                <p>Review all your scores below. Click any score to edit it before submitting.</p>
+            </div>
+            
+            <div class="info-box">
+                <strong>Color Guide:</strong> Scores are color-coded to help you quickly identify patterns. Orange shades indicate lower scores, while blue shades indicate higher scores.
+            </div>
+            
+            <div class="heatmap-container">
+                <table class="heatmap-table" id="heatmapTable">
+                    <!-- Heatmap will be generated here -->
+                </table>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #F8A37E;"></div>
+                        <span>1-2 (Very Low)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #FAC1A9;"></div>
+                        <span>3-4 (Low)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #FCDFD3;"></div>
+                        <span>5 (Below Average)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #FFFFFF; border: 2px solid #cbd5e1;"></div>
+                        <span>6 (Balanced)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #DAF0F3;"></div>
+                        <span>7 (Above Average)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #B5E1E8;"></div>
+                        <span>8-10 (High)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e2e8f0;"></div>
+                        <span>N/A</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="navigation-buttons" style="justify-content: center; margin-top: 30px;">
+                <button class="btn btn-secondary" onclick="backToEvaluation()">
+                    ← Back to Evaluation
+                </button>
+                <button class="btn btn-success" onclick="submitEvaluation()">
+                    Submit Final Evaluation
+                </button>
+            </div>
+        </div>
+        
+        <!-- SUCCESS SCREEN -->
+        <div class="success-screen" id="successScreen">
+            <div class="success-icon">✓</div>
+            <h2>Evaluation Submitted Successfully!</h2>
+            <p style="margin-top: 20px;">Thank you for completing your board evaluation. Your input is valuable and will contribute to strengthening our board's effectiveness.</p>
+            <p style="margin-top: 15px;">You can now close this window.</p>
+        </div>
+    </div>
+    
+    <!-- MODAL: Edit Score -->
+    <div class="modal" id="editScoreModal">
+        <div class="modal-content">
+            <h3>Edit Score</h3>
+            <p id="editScoreLabel">Editing score for...</p>
+            <select class="edit-score-input" id="editScoreInput">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="N/A">Not enough exposure</option>
+            </select>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="saveEditedScore()">Save</button>
+                <button class="btn btn-secondary" onclick="closeEditScoreModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL: Competency Description -->
+    <div class="modal description-modal" id="descriptionModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <h3 id="descriptionTitle">Competency Description</h3>
+            <p id="descriptionText" style="margin-bottom: 25px;"></p>
+            
+            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="color: #667eea; margin-bottom: 15px; font-size: 16px;">Scoring Guidance</h4>
+                
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #1e293b;">2-4: DEVELOPING</strong>
+                    <p style="font-size: 13px; color: #64748b; margin: 5px 0;">Foundational understanding but limited contribution. Learning/following rather than leading. Needs expert support for decisions.</p>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #1e293b;">5-7: PROFICIENT</strong>
+                    <p style="font-size: 13px; color: #64748b; margin: 5px 0;">Competent contributor who adds value to board discussions. Actively shapes discussions with independent judgment on most matters.</p>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #1e293b;">8-10: EXPERT</strong>
+                    <p style="font-size: 13px; color: #64748b; margin: 5px 0;">Recognized authority whose expertise elevates the board. Thought leader others look to. Could lead specialized committees.</p>
+                </div>
+                
+                <details style="margin-top: 15px; cursor: pointer;">
+                    <summary style="font-weight: 600; color: #667eea; font-size: 13px;">View detailed score descriptions</summary>
+                    <div style="margin-top: 15px; font-size: 12px; line-height: 1.7; color: #475569;">
+                        <p><strong>2 - Awareness:</strong> Has basic familiarity; can follow conversations but cannot meaningfully contribute</p>
+                        <p><strong>3 - Understanding:</strong> Understands key principles; occasionally contributes relevant observations</p>
+                        <p><strong>4 - Developing:</strong> Solid grasp of fundamentals; contributes valid points but not strategic insights</p>
+                        <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
+                        <p><strong>5 - Competent:</strong> Working knowledge with practical experience; regularly contributes valuable perspectives</p>
+                        <p><strong>6 - Strong:</strong> Deep knowledge with substantial experience; frequently offers insights that shape board thinking</p>
+                        <p><strong>7 - Advanced:</strong> Extensive knowledge with proven track record; consistently drives strategic discussions</p>
+                        <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
+                        <p><strong>8 - Expert:</strong> Recognized deep expertise within the board; thought leader whose insights are actively sought</p>
+                        <p><strong>9 - Industry Expert:</strong> Expertise extends beyond this board; other organizations seek this person's expertise</p>
+                        <p><strong>10 - Renowned Authority:</strong> Widely recognized leading authority; brings rare, distinguished expertise</p>
+                    </div>
+                </details>
+            </div>
+            
+            <button class="btn btn-primary" onclick="closeDescriptionModal()" style="width: 100%;">Close</button>
+        </div>
+    </div>
+    
+    <script>
+        // ============================================================================
+        // DATABASE CONFIGURATION
+        // ============================================================================
+        const ORG_ID = '11111111-1111-1111-1111-111111111111';
+        const EVAL_ID = '22222222-2222-2222-2222-222222222222';
+        const EVALUATOR_ID = '66666666-0001-0001-0001-000000000001'; // Andy Dale
+        
+        // Will be loaded from database
+        let evaluatorName = "Loading...";
+        let evaluatorId = EVALUATOR_ID;
+        let directors = [];
+        let competencies = [];
+        
+        // Evaluation state
+        let currentDirectorIndex = 0;
+        let scores = {}; // { directorId: { competencyId: score } }
+        let currentEditTarget = null;
+        let showGuidance = true;
+        
+        // ============================================================================
+        // LOAD DATA FROM DATABASE
+        // ============================================================================
+        async function loadDataFromDatabase() {
+            try {
+                // Load evaluator info
+                const { data: evaluator } = await supabaseClient
+                    .from('evaluators')
+                    .select('*')
+                    .eq('id', EVALUATOR_ID)
+                    .single();
+                
+                if (evaluator) {
+                    evaluatorName = evaluator.name;
+                    document.getElementById('evaluatorNameDisplay').textContent = evaluatorName;
+                }
+                
+                // Load directors
+                const { data: directorsData } = await supabaseClient
+                    .from('directors')
+                    .select('*')
+                    .eq('organization_id', ORG_ID)
+                    .eq('is_active', true)
+                    .order('name');
+                
+                directors = (directorsData || []).map(d => ({
+                    id: d.id,
+                    name: d.name,
+                    photo: null
+                }));
+                
+                // Load competencies with their evaluated_by settings
+                const { data: orgComps } = await supabaseClient
+                    .from('organization_competencies')
+                    .select(`
+                        *,
+                        competencies (*)
+                    `)
+                    .eq('evaluation_id', EVAL_ID)
+                    .eq('is_active', true);
+                
+                competencies = (orgComps || []).map(oc => {
+                    const comp = oc.competencies;
+                    // Map evaluated_by from database format to display format
+                    let evaluatedBy = 'Both';
+                    if (oc.evaluated_by === 'Self Only') evaluatedBy = 'Self Only';
+                    if (oc.evaluated_by === 'Peer Only') evaluatedBy = 'Peer Only';
+                    
+                    return {
+                        id: comp.id,
+                        name: comp.name,
+                        category: comp.category,
+                        description: comp.description || '',
+                        levelOfNeed: oc.level_of_need || 'Medium',
+                        evaluatedBy: evaluatedBy
+                    };
+                });
+                
+                // Load existing scores
+                const { data: existingScores } = await supabaseClient
+                    .from('scores')
+                    .select('*')
+                    .eq('evaluation_id', EVAL_ID)
+                    .eq('evaluator_id', EVALUATOR_ID);
+                
+                // Initialize scores object
+                directors.forEach(dir => {
+                    scores[dir.id] = {};
+                });
+                
+                // Pre-fill existing scores
+                if (existingScores) {
+                    existingScores.forEach(s => {
+                        if (scores[s.director_id]) {
+                            scores[s.director_id][s.competency_id] = s.is_na ? 'N/A' : s.score;
+                        }
+                    });
+                }
+                
+                console.log('✅ Data loaded from database');
+                console.log('Directors:', directors.length);
+                console.log('Competencies:', competencies.length);
+                console.log('Existing scores:', existingScores?.length || 0);
+                
+            } catch (error) {
+                console.error('Error loading data from database:', error);
+                alert('Error loading evaluation data. Check console for details.');
+            }
+        }
+        
+        // Initialize scores
+        function initScores() {
+            directors.forEach(dir => {
+                if (!scores[dir.id]) {
+                    scores[dir.id] = {};
+                }
+            });
+        }
+        
+        // Calculate and set header height for sticky positioning
+        function updateHeaderHeight() {
+            const header = document.querySelector('.header');
+            if (header) {
+                const headerHeight = header.offsetHeight;
+                document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+                // Also update body padding so content starts below fixed header
+                document.body.style.paddingTop = `${headerHeight}px`;
+            }
+        }
+        
+        // Call on load and resize
+        window.addEventListener('load', async () => {
+            updateHeaderHeight();
+            // Load data from database
+            await loadDataFromDatabase();
+            // Call again after a short delay to catch any layout shifts
+            setTimeout(updateHeaderHeight, 200);
+        });
+        window.addEventListener('resize', updateHeaderHeight);
+        
+        // Get score description
+        function getScoreDescription(score) {
+            if (!score) return '<strong>No score selected</strong><br>Move the slider to rate this competency.';
+            
+            const descriptions = {
+                1: '<strong>1 - Absent:</strong> Director demonstrably lacks this competency.',
+                2: '<strong>2 - Awareness:</strong> Has basic familiarity; can follow conversations but cannot meaningfully contribute.',
+                3: '<strong>3 - Understanding:</strong> Understands key principles; occasionally contributes relevant observations.',
+                4: '<strong>4 - Developing:</strong> Solid grasp of fundamentals; contributes valid points but not strategic insights.',
+                5: '<strong>5 - Competent:</strong> Working knowledge with practical experience; regularly contributes valuable perspectives.',
+                6: '<strong>6 - Strong:</strong> Deep knowledge with substantial experience; frequently offers insights that shape board thinking.',
+                7: '<strong>7 - Advanced:</strong> Extensive knowledge with proven track record; consistently drives strategic discussions.',
+                8: '<strong>8 - Expert:</strong> Recognized deep expertise within the board; thought leader whose insights are actively sought.',
+                9: '<strong>9 - Industry Expert:</strong> Expertise extends beyond this board; other organizations seek this person\'s expertise.',
+                10: '<strong>10 - Renowned Authority:</strong> Widely recognized leading authority; brings rare, distinguished expertise.'
+            };
+            
+            return descriptions[score] || '';
+        }
+        
+        // Generate slider boxes
+        function generateSliderBoxes(directorId, competencyId, currentScore) {
+            let html = '';
+            for (let i = 1; i <= 10; i++) {
+                const selected = currentScore == i ? 'selected' : '';
+                html += `
+                    <div class="slider-box score-${i} ${selected}" 
+                         onclick="updateScoreFromBox('${directorId}', '${competencyId}', ${i})"
+                         id="box-${directorId}-${competencyId}-${i}">
+                        <span class="box-number">${i}</span>
+                    </div>
+                `;
+            }
+            return html;
+        }
+        
+        // Update score from box click
+        function updateScoreFromBox(directorId, competencyId, value) {
+            // Ensure scores object exists for this director
+            if (!scores[directorId]) {
+                scores[directorId] = {};
+            }
+            
+            // Remove selected class from all boxes
+            for (let i = 1; i <= 10; i++) {
+                const box = document.getElementById(`box-${directorId}-${competencyId}-${i}`);
+                if (box) box.classList.remove('selected');
+            }
+            
+            // Add selected class to clicked box
+            const selectedBox = document.getElementById(`box-${directorId}-${competencyId}-${value}`);
+            if (selectedBox) selectedBox.classList.add('selected');
+            
+            // Update score
+            scores[directorId][competencyId] = parseInt(value);
+            
+            // Update guidance text if visible
+            const guidanceEl = document.getElementById(`guidance-${directorId}-${competencyId}`);
+            if (guidanceEl && showGuidance) {
+                guidanceEl.innerHTML = getScoreDescription(parseInt(value));
+            }
+            
+            saveProgress();
+            renderDirectorNav();
+        }
+        
+        // Render director navigation
+        function renderDirectorNav() {
+            const nav = document.getElementById('directorNav');
+            let html = '';
+            
+            directors.forEach((dir, index) => {
+                const isSelf = dir.id === evaluatorId;
+                const progress = calculateDirectorProgress(dir.id);
+                const isActive = index === currentDirectorIndex;
+                
+                html += `
+                    <button class="director-nav-button ${isActive ? 'active' : ''}" onclick="jumpToDirector(${index})">
+                        <div class="progress-fill-nav" style="width: ${progress}%"></div>
+                        <span class="button-text">
+                            ${dir.name.split(' ')[0]} ${isSelf ? '(You)' : ''}
+                            <span class="completion-badge">${Math.round(progress)}%</span>
+                        </span>
+                    </button>
+                `;
+            });
+            
+            // Add review button
+            html += `
+                <button class="review-nav-button" onclick="goToReview()">
+                    📊 Review & Submit
+                </button>
+            `;
+            
+            nav.innerHTML = html;
+        }
+        
+        // Calculate director progress
+        function calculateDirectorProgress(directorId) {
+            const director = directors.find(d => d.id === directorId);
+            const isSelf = director.id === evaluatorId;
+            
+            // Ensure scores object exists for this director
+            if (!scores[directorId]) {
+                scores[directorId] = {};
+            }
+            
+            let total = 0;
+            let completed = 0;
+            
+            competencies.forEach(comp => {
+                if (canEvaluateCompetency(comp, isSelf)) {
+                    total++;
+                    if (scores[directorId][comp.id]) {
+                        completed++;
+                    }
+                }
+            });
+            
+            return total > 0 ? (completed / total) * 100 : 0;
+        }
+        
+        // Jump to director
+        function jumpToDirector(index) {
+            showDirector(index);
+        }
+        
+        // Start evaluation
+        function startEvaluation() {
+            showGuidance = document.getElementById('showScoringGuidance').checked;
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('evaluationScreen').classList.add('active');
+            document.getElementById('directorNav').style.display = 'flex';
+            renderDirectorNav();
+            showDirector(0);
+            
+            // Recalculate header height now that director nav is visible
+            setTimeout(updateHeaderHeight, 100);
+        }
+        
+        // Show director
+        function showDirector(index) {
+            currentDirectorIndex = index;
+            const director = directors[index];
+            const isSelf = director.id === evaluatorId;
+            
+            // Update progress
+            updateProgress();
+            
+            // Update navigation
+            renderDirectorNav();
+            
+            // Build director card
+            const card = document.getElementById('directorCard');
+            
+            // Get initials for placeholder
+            const initials = director.name.split(' ').map(n => n[0]).join('');
+            
+            let html = `
+                <div class="director-header">
+                    ${director.photo 
+                        ? `<img src="${director.photo}" class="director-photo" alt="${director.name}">` 
+                        : `<div class="director-photo-placeholder">${initials}</div>`
+                    }
+                    <div class="director-info">
+                        <h2>${director.name} ${isSelf ? '(You)' : ''}</h2>
+                        <p class="subtitle">Evaluating ${index + 1} of ${directors.length} directors</p>
+                    </div>
+                </div>
+            `;
+            
+            // Group competencies by category
+            const categories = {};
+            competencies.forEach(comp => {
+                if (!categories[comp.category]) {
+                    categories[comp.category] = [];
+                }
+                categories[comp.category].push(comp);
+            });
+            
+            // Render each category
+            for (const category in categories) {
+                html += `<div class="competency-section">`;
+                html += `<div class="category-header">${category}</div>`;
+                
+                categories[category].forEach(comp => {
+                    // Determine if this competency should be enabled
+                    const canEvaluate = canEvaluateCompetency(comp, isSelf);
+                    
+                    // Ensure scores object exists for this director
+                    if (!scores[director.id]) {
+                        scores[director.id] = {};
+                    }
+                    
+                    const currentScore = scores[director.id][comp.id];
+                    const isNA = currentScore === 'N/A';
+                    const numericScore = isNA ? null : (currentScore || null);
+                    
+                    // Determine icon styling and tooltip
+                    let sClass = '', pClass = '', tooltipText = '';
+                    if (comp.evaluatedBy === 'Self Only') {
+                        sClass = 'active';
+                        pClass = 'disabled';
+                        tooltipText = 'Self-evaluation only';
+                    } else if (comp.evaluatedBy === 'Peer Only') {
+                        sClass = 'inactive';
+                        pClass = 'active';
+                        tooltipText = 'Peer-evaluation only';
+                    } else { // Both
+                        sClass = 'active';
+                        pClass = 'active';
+                        tooltipText = 'Evaluated by both self and peer';
+                    }
+                    
+                    // Get score description
+                    const scoreDesc = getScoreDescription(isNA ? null : currentScore);
+                    
+                    html += `
+                        <div class="competency-item ${!canEvaluate ? 'disabled' : ''}">
+                            <div class="competency-header">
+                                <div class="competency-title">
+                                    <h4>
+                                        ${comp.name}
+                                        <div class="competency-description-tooltip">${comp.description}</div>
+                                    </h4>
+                                    <div class="eval-type-icon">
+                                        <div class="half left ${sClass}">S</div>
+                                        <div class="half right ${pClass}">P</div>
+                                        <div class="eval-type-tooltip">${tooltipText}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            ${canEvaluate ? `
+                                <div class="score-slider-container">
+                                    <div class="na-checkbox-container">
+                                        <label class="na-checkbox">
+                                            <input type="checkbox" 
+                                                   id="na-${director.id}-${comp.id}"
+                                                   ${isNA ? 'checked' : ''}
+                                                   onchange="toggleNA('${director.id}', '${comp.id}')">
+                                            Not enough exposure
+                                        </label>
+                                    </div>
+                                    <div class="slider-wrapper">
+                                        <div class="slider-track" id="track-${director.id}-${comp.id}" style="${isNA ? 'opacity: 0.4; pointer-events: none;' : ''}">
+                                            ${generateSliderBoxes(director.id, comp.id, numericScore)}
+                                        </div>
+                                        <div class="slider-labels">
+                                            <span class="label-absent">Absent</span>
+                                            <span class="label-developing">Developing</span>
+                                            <span class="label-proficient">Proficient</span>
+                                            <span class="label-expert">Expert</span>
+                                            <div class="divider divider-1"></div>
+                                            <div class="divider divider-2"></div>
+                                            <div class="divider divider-3"></div>
+                                        </div>
+                                    </div>
+                                    <div class="scoring-guidance ${showGuidance ? '' : 'hidden'}" id="guidance-${director.id}-${comp.id}">
+                                        ${scoreDesc}
+                                    </div>
+                                </div>
+                            ` : `
+                                <p style="color: #94a3b8; font-size: 12px; margin-top: 8px; font-style: italic;">
+                                    ${isSelf 
+                                        ? 'Peer evaluation only' 
+                                        : 'Self-evaluation only'}
+                                </p>
+                            `}
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            }
+            
+            // Navigation buttons
+            html += `
+                <div class="navigation-buttons">
+                    ${index > 0 
+                        ? `<button class="btn btn-secondary" onclick="previousDirector()">← Previous Director</button>`
+                        : `<div></div>`
+                    }
+                    ${index < directors.length - 1
+                        ? `<button class="btn btn-primary" onclick="nextDirector()">Next Director →</button>`
+                        : `<button class="btn btn-success" onclick="goToReview()">Review & Submit →</button>`
+                    }
+                </div>
+            `;
+            
+            card.innerHTML = html;
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+            
+            // Auto-save
+            saveProgress();
+        }
+        
+        // Can evaluate competency
+        function canEvaluateCompetency(comp, isSelf) {
+            if (comp.evaluatedBy === 'Both') return true;
+            if (comp.evaluatedBy === 'Self Only') return isSelf;
+            if (comp.evaluatedBy === 'Peer Only') return !isSelf;
+            return false;
+        }
+        
+        // Update score from slider
+        function updateScore(directorId, competencyId, value) {
+            scores[directorId][competencyId] = parseInt(value);
+            document.getElementById(`score-display-${directorId}-${competencyId}`).textContent = value;
+            
+            // Update guidance text if visible
+            const guidanceEl = document.getElementById(`guidance-${directorId}-${competencyId}`);
+            if (guidanceEl && showGuidance) {
+                guidanceEl.innerHTML = getScoreDescription(parseInt(value));
+            }
+            
+            saveProgress();
+            renderDirectorNav();
+        }
+        
+        // Toggle N/A checkbox
+        function toggleNA(directorId, competencyId) {
+            // Ensure scores object exists for this director
+            if (!scores[directorId]) {
+                scores[directorId] = {};
+            }
+            
+            const checkbox = document.getElementById(`na-${directorId}-${competencyId}`);
+            const track = document.getElementById(`track-${directorId}-${competencyId}`);
+            
+            if (checkbox.checked) {
+                scores[directorId][competencyId] = 'N/A';
+                track.style.opacity = '0.4';
+                track.style.pointerEvents = 'none';
+                
+                // Update guidance
+                const guidanceEl = document.getElementById(`guidance-${directorId}-${competencyId}`);
+                if (guidanceEl && showGuidance) {
+                    guidanceEl.innerHTML = '<strong>Not enough exposure</strong><br>You have indicated insufficient observation to assess this competency.';
+                }
+            } else {
+                // Re-enable track
+                track.style.opacity = '1';
+                track.style.pointerEvents = 'auto';
+                
+                // Clear score
+                scores[directorId][competencyId] = null;
+                
+                // Update guidance
+                const guidanceEl = document.getElementById(`guidance-${directorId}-${competencyId}`);
+                if (guidanceEl && showGuidance) {
+                    guidanceEl.innerHTML = '<strong>No score selected</strong><br>Click a box to rate this competency.';
+                }
+            }
+            saveProgress();
+            renderDirectorNav();
+        }
+        
+        // Show competency description
+        function showDescription(name, description) {
+            document.getElementById('descriptionTitle').textContent = name;
+            document.getElementById('descriptionText').textContent = description;
+            document.getElementById('descriptionModal').classList.add('active');
+        }
+        
+        // Close description modal
+        function closeDescriptionModal() {
+            document.getElementById('descriptionModal').classList.remove('active');
+        }
+        
+        // Helper to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Set score
+        function setScore(directorId, competencyId, score) {
+            scores[directorId][competencyId] = score;
+            showDirector(currentDirectorIndex); // Refresh to show selected state
+        }
+        
+        // Navigation
+        function nextDirector() {
+            if (currentDirectorIndex < directors.length - 1) {
+                showDirector(currentDirectorIndex + 1);
+            }
+        }
+        
+        function previousDirector() {
+            if (currentDirectorIndex > 0) {
+                showDirector(currentDirectorIndex - 1);
+            }
+        }
+        
+        // Update progress
+        function updateProgress() {
+            const totalScores = directors.length * competencies.filter(c => {
+                return c.evaluatedBy === 'Both' || 
+                       (c.evaluatedBy === 'Self Only') || 
+                       (c.evaluatedBy === 'Peer Only');
+            }).length;
+            
+            let completedScores = 0;
+            directors.forEach(dir => {
+                competencies.forEach(comp => {
+                    const isSelf = dir.id === evaluatorId;
+                    if (canEvaluateCompetency(comp, isSelf) && scores[dir.id][comp.id]) {
+                        completedScores++;
+                    }
+                });
+            });
+            
+            const percentage = Math.round((completedScores / totalScores) * 100);
+            document.getElementById('progressFill').style.width = percentage + '%';
+        }
+        
+        // Save progress
+        async function saveProgress() {
+            const indicator = document.getElementById('saveIndicator');
+            const icon = document.getElementById('saveIcon');
+            const text = document.getElementById('saveText');
+            
+            indicator.classList.add('saving');
+            icon.textContent = '⟳';
+            text.textContent = 'Saving...';
+            
+            try {
+                // Prepare all scores for database
+                const scoreRecords = [];
+                
+                for (const directorId in scores) {
+                    for (const competencyId in scores[directorId]) {
+                        const scoreValue = scores[directorId][competencyId];
+                        
+                        scoreRecords.push({
+                            evaluation_id: EVAL_ID,
+                            director_id: directorId,
+                            competency_id: competencyId,
+                            evaluator_id: EVALUATOR_ID,
+                            score: scoreValue === 'N/A' ? null : parseInt(scoreValue),
+                            is_na: scoreValue === 'N/A',
+                            is_self_evaluation: directorId === EVALUATOR_ID
+                        });
+                    }
+                }
+                
+                // Save to database (upsert)
+                if (scoreRecords.length > 0) {
+                    const { error } = await supabaseClient
+                        .from('scores')
+                        .upsert(scoreRecords, {
+                            onConflict: 'evaluation_id,director_id,competency_id,evaluator_id'
+                        });
+                    
+                    if (error) throw error;
+                }
+                
+                indicator.classList.remove('saving');
+                icon.textContent = '✓';
+                text.textContent = 'All changes saved';
+                
+                console.log(`✅ Saved ${scoreRecords.length} scores to database`);
+                
+            } catch (error) {
+                console.error('Error saving to database:', error);
+                indicator.classList.remove('saving');
+                icon.textContent = '⚠';
+                text.textContent = 'Save failed - will retry';
+                
+                // Retry after 2 seconds
+                setTimeout(saveProgress, 2000);
+            }
+        }
+        
+        // Go to review
+        function goToReview() {
+            document.getElementById('evaluationScreen').classList.remove('active');
+            document.getElementById('reviewScreen').classList.add('active');
+            generateHeatmap();
+            // Keep director nav visible but update it
+            renderDirectorNav();
+            window.scrollTo(0, 0);
+        }
+        
+        // Back to evaluation
+        function backToEvaluation() {
+            document.getElementById('reviewScreen').classList.remove('active');
+            document.getElementById('evaluationScreen').classList.add('active');
+            // Show the last director we were viewing
+            showDirector(currentDirectorIndex);
+        }
+        
+        // Generate heatmap
+        function generateHeatmap() {
+            const table = document.getElementById('heatmapTable');
+            
+            // Build simple header
+            let html = '<thead><tr>';
+            html += '<th class="competency-header">Competency</th>';
+            html += `<th colspan="${directors.length}" style="text-align: center;">Directors</th>`;
+            html += '</tr></thead><tbody>';
+            
+            // Director photos row
+            html += '<tr class="director-photo-row">';
+            html += '<td class="competency-label"></td>';
+            directors.forEach((dir, index) => {
+                const initials = dir.name.split(' ').map(n => n[0]).join('');
+                html += `<td onclick="jumpToDirectorFromReview(${index})">`;
+                if (dir.photo) {
+                    html += `<img src="${dir.photo}" class="heatmap-photo" alt="${dir.name}">`;
+                } else {
+                    html += `<div class="heatmap-photo-placeholder">${initials}</div>`;
+                }
+                html += `</td>`;
+            });
+            html += '</tr>';
+            
+            // Director names row
+            html += '<tr class="director-name-row">';
+            html += '<td class="competency-label"></td>';
+            directors.forEach((dir, index) => {
+                const isSelf = dir.id === evaluatorId;
+                html += `<td onclick="jumpToDirectorFromReview(${index})">${dir.name}${isSelf ? ' (You)' : ''}</td>`;
+            });
+            html += '</tr>';
+            
+            // Group competencies by category
+            const categories = {};
+            competencies.forEach(comp => {
+                if (!categories[comp.category]) {
+                    categories[comp.category] = [];
+                }
+                categories[comp.category].push(comp);
+            });
+            
+            // Build rows
+            for (const category in categories) {
+                // Category header row
+                html += `<tr class="category-row"><td colspan="${directors.length + 1}">${category}</td></tr>`;
+                
+                categories[category].forEach(comp => {
+                    html += `<tr>`;
+                    html += `<td class="competency-name">${comp.name}</td>`;
+                    
+                    directors.forEach(dir => {
+                        const score = scores[dir.id][comp.id];
+                        const isSelf = dir.id === evaluatorId;
+                        const canEval = canEvaluateCompetency(comp, isSelf);
+                        
+                        if (!canEval) {
+                            html += `<td style="background: #f8fafc;">-</td>`;
+                        } else if (score) {
+                            const color = getScoreColor(score);
+                            html += `<td class="score-cell" onclick="editScore('${dir.id}', '${comp.id}', '${escapeHtml(dir.name)}', '${escapeHtml(comp.name)}')">
+                                <span class="score-value" style="background: ${color}; color: ${score === 'N/A' ? '#475569' : 'white'};">
+                                    ${score === 'N/A' ? 'N/A' : score}
+                                </span>
+                            </td>`;
+                        } else {
+                            html += `<td class="score-cell" onclick="editScore('${dir.id}', '${comp.id}', '${escapeHtml(dir.name)}', '${escapeHtml(comp.name)}')">
+                                <span style="color: #cbd5e1;">—</span>
+                            </td>`;
+                        }
+                    });
+                    
+                    html += `</tr>`;
+                });
+            }
+            
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
+        
+        // Jump to director from review screen
+        function jumpToDirectorFromReview(index) {
+            document.getElementById('reviewScreen').classList.remove('active');
+            document.getElementById('evaluationScreen').classList.add('active');
+            showDirector(index);
+        }
+        
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Get score color - using the specified color scheme
+        function getScoreColor(score) {
+            if (score === 'N/A') return '#e2e8f0';
+            
+            const s = parseInt(score);
+            
+            // Orange shades for lower scores (UW colors)
+            if (s <= 2) return '#F8A37E';  // RGB(248, 163, 126) - Absent
+            if (s <= 4) return '#FAC1A9';  // RGB(250, 193, 169) - UW3-4
+            if (s == 5) return '#FCDFD3';  // RGB(252, 223, 211) - UW2
+            
+            // White for middle/balanced (6)
+            if (s == 6) return '#FFFFFF';  // White - Balanced
+            
+            // Blue shades for higher scores (OW colors)
+            if (s == 7) return '#DAF0F3';  // RGB(218, 240, 243) - OW2
+            if (s == 8) return '#B5E1E8';  // RGB(181, 225, 232) - OW3
+            if (s == 9) return '#B5E1E8';  // RGB(181, 225, 232) - OW3-4
+            if (s == 10) return '#B5E1E8'; // RGB(181, 225, 232) - OW3-4
+            
+            return '#FFFFFF';
+        }
+        
+        // Edit score
+        function editScore(directorId, competencyId, directorName, competencyName) {
+            currentEditTarget = { directorId, competencyId };
+            
+            document.getElementById('editScoreLabel').textContent = 
+                `${directorName} - ${competencyName}`;
+            
+            const currentScore = scores[directorId][competencyId] || '5';
+            document.getElementById('editScoreInput').value = currentScore;
+            
+            document.getElementById('editScoreModal').classList.add('active');
+        }
+        
+        function saveEditedScore() {
+            if (currentEditTarget) {
+                const newScore = document.getElementById('editScoreInput').value;
+                scores[currentEditTarget.directorId][currentEditTarget.competencyId] = newScore;
+                generateHeatmap();
+                renderDirectorNav(); // Update navigation to reflect new completion
+                saveProgress();
+            }
+            closeEditScoreModal();
+        }
+        
+        function closeEditScoreModal() {
+            document.getElementById('editScoreModal').classList.remove('active');
+            currentEditTarget = null;
+        }
+        
+        // Submit evaluation
+        function submitEvaluation() {
+            if (confirm('Are you sure you want to submit your evaluation? You will not be able to make changes after submission.')) {
+                // In production, send to server
+                document.getElementById('reviewScreen').classList.remove('active');
+                document.getElementById('successScreen').classList.add('active');
+                
+                // Clear local storage
+                localStorage.removeItem('boardEvalScores');
+            }
+        }
+        
+        // Initialize
+        initScores();
+        
+        // Load saved progress if exists
+        const savedScores = localStorage.getItem('boardEvalScores');
+        if (savedScores) {
+            const loadedScores = JSON.parse(savedScores);
+            // Merge saved scores with initialized scores to ensure all directors exist
+            directors.forEach(dir => {
+                if (loadedScores[dir.id]) {
+                    scores[dir.id] = loadedScores[dir.id];
+                }
+            });
+        }
+        
+        // Calculate estimated time
+        const totalCompetencies = competencies.length;
+        const totalDirectors = directors.length;
+        const estimatedMinutes = Math.ceil((totalCompetencies * totalDirectors * 0.5) / 5) * 5;
+        document.getElementById('estimatedTime').textContent = estimatedMinutes;
+    </script>
+</body>
+</html>
