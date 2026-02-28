@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BoardCrafter - Board Evaluation Report</title>
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f8fafc;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #605C7F 0%, #302E3F 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+        
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #f8fafc;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .score-cell {
+            font-weight: 600;
+            font-size: 18px;
+        }
+        
+        .score-uw2 { color: #dc2626; }
+        .score-uw1 { color: #f97316; }
+        .score-balanced { color: #059669; }
+        .score-ow1 { color: #0284c7; }
+        .score-ow2 { color: #7c3aed; }
+        
+        .classification-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-uw2 { background: #fef2f2; color: #dc2626; }
+        .badge-uw1 { background: #fff7ed; color: #f97316; }
+        .badge-balanced { background: #f0fdf4; color: #059669; }
+        .badge-ow1 { background: #eff6ff; color: #0284c7; }
+        .badge-ow2 { background: #faf5ff; color: #7c3aed; }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            background: #D97757;
+            color: white;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .summary-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .summary-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #D97757;
+        }
+        
+        .summary-label {
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 id="reportTitle">Board Evaluation Report</h1>
+        <p id="reportSubtitle" style="opacity: 0.9; margin-top: 10px;">Loading...</p>
+    </div>
+    
+    <div class="container">
+        <!-- Summary Stats -->
+        <div class="section">
+            <h2>📊 Evaluation Summary</h2>
+            <div class="summary-grid" id="summaryStats">
+                <div class="loading">Calculating...</div>
+            </div>
+        </div>
+        
+        <!-- Competency Scores -->
+        <div class="section">
+            <h2>🎯 Board-Wide Competency Scores</h2>
+            <div id="competencyScores" class="loading">Loading scores...</div>
+        </div>
+        
+        <!-- Director Breakdown -->
+        <div class="section">
+            <h2>👥 Director Scores by Competency</h2>
+            <div id="directorScores" class="loading">Loading director scores...</div>
+        </div>
+        
+        <!-- Export -->
+        <div style="text-align: center; margin: 30px 0;">
+            <button class="btn" onclick="exportReport()">📄 Export Report (PDF)</button>
+        </div>
+    </div>
+    
+    <script>
+        // Configuration
+        const ORG_ID = '11111111-1111-1111-1111-111111111111';
+        const EVAL_ID = '22222222-2222-2222-2222-222222222222';
+        
+        let allScores = [];
+        let competencies = [];
+        let directors = [];
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadReport();
+        });
+        
+        async function loadReport() {
+            try {
+                // Load organization
+                const orgs = await db.getOrganizations();
+                const org = orgs.find(o => o.id === ORG_ID);
+                if (org) {
+                    document.getElementById('reportTitle').textContent = `${org.name} - Board Evaluation Report`;
+                    document.getElementById('reportSubtitle').textContent = '2026 Annual Board Evaluation';
+                }
+                
+                // Load directors
+                directors = await db.getDirectors(ORG_ID);
+                
+                // Load competencies
+                const { data: orgComps } = await supabaseClient
+                    .from('organization_competencies')
+                    .select(`
+                        *,
+                        competencies (*)
+                    `)
+                    .eq('evaluation_id', EVAL_ID)
+                    .eq('is_active', true);
+                
+                competencies = orgComps || [];
+                
+                // Load all scores
+                const { data: scores } = await supabaseClient
+                    .from('scores')
+                    .select('*')
+                    .eq('evaluation_id', EVAL_ID);
+                
+                allScores = scores || [];
+                
+                // Render everything
+                renderSummary();
+                renderCompetencyScores();
+                renderDirectorScores();
+                
+            } catch (error) {
+                console.error('Error loading report:', error);
+            }
+        }
+        
+        function renderSummary() {
+            const totalCompetencies = competencies.length;
+            const totalDirectors = directors.length;
+            const totalScoresExpected = totalCompetencies * totalDirectors;
+            const totalScoresReceived = allScores.length;
+            const completionPercent = totalScoresExpected > 0 
+                ? Math.round((totalScoresReceived / totalScoresExpected) * 100) 
+                : 0;
+            
+            const html = `
+                <div class="summary-card">
+                    <div class="summary-value">${totalDirectors}</div>
+                    <div class="summary-label">Directors Evaluated</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value">${totalCompetencies}</div>
+                    <div class="summary-label">Competencies Assessed</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value">${totalScoresReceived}</div>
+                    <div class="summary-label">Total Scores</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value">${completionPercent}%</div>
+                    <div class="summary-label">Completion Rate</div>
+                </div>
+            `;
+            
+            document.getElementById('summaryStats').innerHTML = html;
+        }
+        
+        function renderCompetencyScores() {
+            if (competencies.length === 0) {
+                document.getElementById('competencyScores').innerHTML = `
+                    <p style="color: #64748b;">No competencies configured.</p>
+                `;
+                return;
+            }
+            
+            // Calculate average score for each competency across all directors
+            const competencyAverages = competencies.map(oc => {
+                const comp = oc.competencies;
+                const compScores = allScores.filter(s => s.competency_id === comp.id && !s.is_na);
+                const avg = compScores.length > 0
+                    ? compScores.reduce((sum, s) => sum + s.score, 0) / compScores.length
+                    : 0;
+                
+                return {
+                    name: comp.name,
+                    category: comp.category,
+                    average: avg,
+                    classification: classifyScore(avg),
+                    numScores: compScores.length
+                };
+            });
+            
+            // Sort by average (lowest first - these need attention)
+            competencyAverages.sort((a, b) => a.average - b.average);
+            
+            let html = '<table><thead><tr>';
+            html += '<th>Competency</th>';
+            html += '<th>Category</th>';
+            html += '<th>Board Average</th>';
+            html += '<th>Classification</th>';
+            html += '<th># Scores</th>';
+            html += '</tr></thead><tbody>';
+            
+            competencyAverages.forEach(item => {
+                const scoreClass = `score-${item.classification.toLowerCase().replace(' ', '')}`;
+                const badgeClass = `badge-${item.classification.toLowerCase().replace(' ', '')}`;
+                
+                html += '<tr>';
+                html += `<td><strong>${item.name}</strong></td>`;
+                html += `<td>${item.category}</td>`;
+                html += `<td class="score-cell ${scoreClass}">${item.average > 0 ? item.average.toFixed(1) : 'N/A'}</td>`;
+                html += `<td><span class="classification-badge ${badgeClass}">${item.classification}</span></td>`;
+                html += `<td>${item.numScores}</td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('competencyScores').innerHTML = html;
+        }
+        
+        function renderDirectorScores() {
+            if (directors.length === 0) {
+                document.getElementById('directorScores').innerHTML = `
+                    <p style="color: #64748b;">No directors found.</p>
+                `;
+                return;
+            }
+            
+            let html = '<table><thead><tr>';
+            html += '<th>Director</th>';
+            html += '<th>Avg Score</th>';
+            html += '<th>Competencies Rated</th>';
+            html += '<th>Status</th>';
+            html += '</tr></thead><tbody>';
+            
+            directors.forEach(dir => {
+                const dirScores = allScores.filter(s => s.director_id === dir.id && !s.is_na);
+                const avgScore = dirScores.length > 0
+                    ? dirScores.reduce((sum, s) => sum + s.score, 0) / dirScores.length
+                    : 0;
+                
+                const scoreClass = avgScore > 0 ? `score-${classifyScore(avgScore).toLowerCase().replace(' ', '')}` : '';
+                
+                html += '<tr>';
+                html += `<td><strong>${dir.name}</strong></td>`;
+                html += `<td class="score-cell ${scoreClass}">${avgScore > 0 ? avgScore.toFixed(1) : 'N/A'}</td>`;
+                html += `<td>${dirScores.length} / ${competencies.length}</td>`;
+                html += `<td>${dirScores.length === competencies.length ? '✓ Complete' : '⏳ In Progress'}</td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('directorScores').innerHTML = html;
+        }
+        
+        function classifyScore(score) {
+            if (score < 4.5) return 'UW2';
+            if (score < 5.5) return 'UW1';
+            if (score < 6.5) return 'Balanced';
+            if (score < 7.5) return 'OW1';
+            return 'OW2';
+        }
+        
+        function exportReport() {
+            alert('PDF export feature coming soon!\n\nFor now, you can use your browser\'s Print function (Ctrl+P) to save as PDF.');
+            window.print();
+        }
+    </script>
+</body>
+</html>

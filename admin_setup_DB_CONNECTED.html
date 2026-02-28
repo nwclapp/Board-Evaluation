@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BoardCrafter - Admin Setup</title>
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f8fafc;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #605C7F 0%, #302E3F 100%);
+            color: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo { font-size: 24px; font-weight: 700; }
+        .org-name { font-size: 18px; opacity: 0.9; }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
+        
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .director-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .director-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .director-info h4 {
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        
+        .director-info p {
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #D97757;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #C1543A;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        
+        .competency-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .competency-card h4 {
+            color: #1e293b;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .category-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #D97757;
+            color: white;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #D97757;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">BoardCrafter</div>
+            <div class="org-name" id="orgName">Loading...</div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- DIRECTORS -->
+        <div class="section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>📋 Board Directors</h2>
+                <button class="btn btn-primary" onclick="openAddDirectorModal()">+ Add Director</button>
+            </div>
+            
+            <div id="directorsList" class="loading">Loading directors...</div>
+        </div>
+        
+        <!-- COMPETENCIES -->
+        <div class="section">
+            <h2>🎯 Competencies for Evaluation</h2>
+            <p style="color: #64748b; margin-bottom: 20px;">
+                These are the custom competencies for Laird Norton Company
+            </p>
+            
+            <div id="competenciesList" class="loading">Loading competencies...</div>
+        </div>
+        
+        <!-- SAVE BUTTON -->
+        <div style="text-align: center; margin: 30px 0;">
+            <button class="btn btn-primary" style="padding: 15px 40px; font-size: 16px;" onclick="saveConfiguration()">
+                💾 Save Configuration
+            </button>
+        </div>
+    </div>
+    
+    <!-- ADD DIRECTOR MODAL -->
+    <div id="addDirectorModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 20px; color: #1e293b;">Add New Director</h3>
+            
+            <form id="addDirectorForm" onsubmit="addDirector(event)">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="directorName" required placeholder="e.g., John Smith">
+                </div>
+                
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="directorEmail" required placeholder="john.smith@example.com">
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 30px;">
+                    <button type="submit" class="btn btn-primary">Add Director</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Configuration - Laird Norton Company
+        const ORG_ID = '11111111-1111-1111-1111-111111111111';
+        const EVAL_ID = '22222222-2222-2222-2222-222222222222';
+        
+        // Load everything on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadOrganization();
+            await loadDirectors();
+            await loadCompetencies();
+        });
+        
+        async function loadOrganization() {
+            try {
+                const orgs = await db.getOrganizations();
+                const org = orgs.find(o => o.id === ORG_ID);
+                if (org) {
+                    document.getElementById('orgName').textContent = org.name;
+                }
+            } catch (error) {
+                console.error('Error loading organization:', error);
+            }
+        }
+        
+        async function loadDirectors() {
+            try {
+                const directors = await db.getDirectors(ORG_ID);
+                
+                if (!directors || directors.length === 0) {
+                    document.getElementById('directorsList').innerHTML = `
+                        <p style="color: #64748b; text-align: center; padding: 20px;">
+                            No directors yet. Click "+ Add Director" to get started.
+                        </p>
+                    `;
+                    return;
+                }
+                
+                const html = `
+                    <div class="director-grid">
+                        ${directors.map(dir => `
+                            <div class="director-card">
+                                <div class="director-info">
+                                    <h4>${dir.name}</h4>
+                                    <p>${dir.email}</p>
+                                </div>
+                                <button class="btn btn-secondary btn-small" onclick="removeDirector('${dir.id}', '${dir.name}')">
+                                    Remove
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                document.getElementById('directorsList').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading directors:', error);
+                document.getElementById('directorsList').innerHTML = `
+                    <p style="color: #ef4444;">Error loading directors. Check console.</p>
+                `;
+            }
+        }
+        
+        async function loadCompetencies() {
+            try {
+                // Get competencies for this organization
+                const { data, error } = await supabaseClient
+                    .from('competencies')
+                    .select('*')
+                    .eq('organization_id', ORG_ID)
+                    .order('category', { ascending: true });
+                
+                if (error) throw error;
+                
+                if (!data || data.length === 0) {
+                    document.getElementById('competenciesList').innerHTML = `
+                        <p style="color: #64748b;">No custom competencies found.</p>
+                    `;
+                    return;
+                }
+                
+                // Group by category
+                const grouped = {};
+                data.forEach(comp => {
+                    if (!grouped[comp.category]) {
+                        grouped[comp.category] = [];
+                    }
+                    grouped[comp.category].push(comp);
+                });
+                
+                let html = '';
+                Object.keys(grouped).forEach(category => {
+                    html += `<h3 style="color: #605C7F; margin: 20px 0 15px 0; font-size: 16px;">${category}</h3>`;
+                    grouped[category].forEach(comp => {
+                        html += `
+                            <div class="competency-card">
+                                <h4>
+                                    ${comp.name}
+                                    <span class="category-tag">${category}</span>
+                                </h4>
+                                ${comp.description ? `<p style="color: #64748b; font-size: 14px;">${comp.description}</p>` : ''}
+                            </div>
+                        `;
+                    });
+                });
+                
+                document.getElementById('competenciesList').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading competencies:', error);
+                document.getElementById('competenciesList').innerHTML = `
+                    <p style="color: #ef4444;">Error loading competencies. Check console.</p>
+                `;
+            }
+        }
+        
+        function openAddDirectorModal() {
+            document.getElementById('addDirectorModal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('addDirectorModal').classList.remove('active');
+            document.getElementById('addDirectorForm').reset();
+        }
+        
+        async function addDirector(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('directorName').value;
+            const email = document.getElementById('directorEmail').value;
+            
+            try {
+                await db.createDirector(ORG_ID, name, email);
+                alert('✓ Director added successfully!');
+                closeModal();
+                await loadDirectors();
+            } catch (error) {
+                alert('Error adding director: ' + error.message);
+            }
+        }
+        
+        async function removeDirector(directorId, directorName) {
+            if (!confirm(`Remove ${directorName} from the board?`)) {
+                return;
+            }
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('directors')
+                    .update({ is_active: false })
+                    .eq('id', directorId);
+                
+                if (error) throw error;
+                
+                alert('✓ Director removed successfully!');
+                await loadDirectors();
+            } catch (error) {
+                alert('Error removing director: ' + error.message);
+            }
+        }
+        
+        async function saveConfiguration() {
+            alert('✓ Configuration saved!\n\nAll changes are automatically saved to the database.');
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
