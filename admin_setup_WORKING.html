@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BoardCrafter - Admin Setup</title>
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f8fafc;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #605C7F 0%, #302E3F 100%);
+            color: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo { font-size: 24px; font-weight: 700; }
+        .org-name { font-size: 18px; opacity: 0.9; }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
+        
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover { color: #D97757; background: #fef2ee; }
+        .tab.active { color: #D97757; background: white; border-bottom: 3px solid #D97757; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .director-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .director-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .director-info h4 {
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        
+        .director-info p {
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: #D97757;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #C1543A;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .competency-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .competency-card h4 {
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        
+        .category-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #D97757;
+            color: white;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #D97757;
+        }
+        
+        .info-box {
+            background: #f0fdf4;
+            border: 2px solid #10b981;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        
+        .info-box-title {
+            font-size: 14px;
+            color: #065f46;
+            margin-bottom: 5px;
+        }
+        
+        .info-box-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #047857;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">BoardCrafter</div>
+            <div class="org-name" id="orgNameDisplay">Loading...</div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="showTab(0)">Organization & Directors</button>
+            <button class="tab" onclick="showTab(1)">Competencies</button>
+            <button class="tab" onclick="showTab(2)">Evaluators</button>
+        </div>
+        
+        <!-- TAB 1: ORGANIZATION & DIRECTORS -->
+        <div class="tab-content active">
+            <div class="section">
+                <div class="info-box">
+                    <div class="info-box-title">Organization:</div>
+                    <div class="info-box-value" id="orgName2">Loading...</div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px;">
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 32px; font-weight: 700; color: #D97757;" id="directorCount">0</div>
+                        <div style="color: #64748b; font-size: 14px;">Directors</div>
+                    </div>
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 32px; font-weight: 700; color: #D97757;" id="competencyCount">0</div>
+                        <div style="color: #64748b; font-size: 14px;">Competencies</div>
+                    </div>
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 32px; font-weight: 700; color: #D97757;">2026</div>
+                        <div style="color: #64748b; font-size: 14px;">Evaluation Year</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>📋 Board Directors</h2>
+                
+                <div id="directorsList" class="loading">Loading directors...</div>
+                
+                <!-- Add Director Form -->
+                <div style="margin-top: 30px; padding-top: 30px; border-top: 2px solid #e2e8f0;">
+                    <h3 style="margin-bottom: 15px; color: #1e293b; font-size: 18px;">Add New Director</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 15px; align-items: end;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #475569; font-size: 14px;">Full Name</label>
+                            <input type="text" id="newDirectorName" placeholder="e.g., John Smith" style="width: 100%; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #475569; font-size: 14px;">Email</label>
+                            <input type="email" id="newDirectorEmail" placeholder="john.smith@example.com" style="width: 100%; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px;">
+                        </div>
+                        <div>
+                            <button class="btn btn-primary" onclick="addDirector()">+ Add Director</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TAB 2: COMPETENCIES -->
+        <div class="tab-content">
+            <div class="section">
+                <h2>🎯 Evaluation Competencies</h2>
+                <p style="color: #64748b; margin-bottom: 25px;">
+                    These are the custom competencies configured for Laird Norton Company
+                </p>
+                
+                <div id="competenciesList" class="loading">Loading competencies...</div>
+            </div>
+        </div>
+        
+        <!-- TAB 3: EVALUATORS -->
+        <div class="tab-content">
+            <div class="section">
+                <h2>👥 Evaluators</h2>
+                <p style="color: #64748b; margin-bottom: 25px;">
+                    People who will evaluate board members
+                </p>
+                
+                <div id="evaluatorsList" class="loading">Loading evaluators...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Configuration
+        const ORG_ID = '11111111-1111-1111-1111-111111111111';
+        const EVAL_ID = '22222222-2222-2222-2222-222222222222';
+        
+        let directors = [];
+        let competencies = [];
+        let evaluators = [];
+        let organization = null;
+        
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadAll();
+        });
+        
+        async function loadAll() {
+            await loadOrganization();
+            await loadDirectors();
+            await loadCompetencies();
+            await loadEvaluators();
+            renderAll();
+        }
+        
+        async function loadOrganization() {
+            try {
+                const orgs = await db.getOrganizations();
+                organization = orgs.find(o => o.id === ORG_ID);
+                if (organization) {
+                    document.getElementById('orgNameDisplay').textContent = organization.name;
+                    document.getElementById('orgName2').textContent = organization.name;
+                }
+            } catch (error) {
+                console.error('Error loading organization:', error);
+            }
+        }
+        
+        async function loadDirectors() {
+            try {
+                directors = await db.getDirectors(ORG_ID);
+                document.getElementById('directorCount').textContent = directors.length;
+                console.log('✅ Loaded directors:', directors.length);
+            } catch (error) {
+                console.error('Error loading directors:', error);
+            }
+        }
+        
+        async function loadCompetencies() {
+            try {
+                const { data } = await supabaseClient
+                    .from('competencies')
+                    .select('*')
+                    .eq('organization_id', ORG_ID)
+                    .order('category');
+                
+                competencies = data || [];
+                document.getElementById('competencyCount').textContent = competencies.length;
+                console.log('✅ Loaded competencies:', competencies.length);
+            } catch (error) {
+                console.error('Error loading competencies:', error);
+            }
+        }
+        
+        async function loadEvaluators() {
+            try {
+                const { data } = await supabaseClient
+                    .from('evaluators')
+                    .select('*')
+                    .eq('evaluation_id', EVAL_ID)
+                    .order('name');
+                
+                evaluators = data || [];
+                console.log('✅ Loaded evaluators:', evaluators.length);
+            } catch (error) {
+                console.error('Error loading evaluators:', error);
+            }
+        }
+        
+        function renderAll() {
+            renderDirectors();
+            renderCompetencies();
+            renderEvaluators();
+        }
+        
+        function renderDirectors() {
+            const container = document.getElementById('directorsList');
+            
+            if (directors.length === 0) {
+                container.innerHTML = '<p style="color: #64748b; padding: 20px;">No directors yet. Add directors below.</p>';
+                return;
+            }
+            
+            let html = '<div class="director-grid">';
+            
+            directors.forEach(dir => {
+                html += `
+                    <div class="director-card">
+                        <div class="director-info">
+                            <h4>${dir.name}</h4>
+                            <p>${dir.email}</p>
+                        </div>
+                        <button class="btn btn-danger btn-small" onclick="removeDirector('${dir.id}', '${dir.name.replace(/'/g, "\\'")}')">
+                            Remove
+                        </button>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        function renderCompetencies() {
+            const container = document.getElementById('competenciesList');
+            
+            if (competencies.length === 0) {
+                container.innerHTML = '<p style="color: #64748b;">No competencies configured.</p>';
+                return;
+            }
+            
+            // Group by category
+            const grouped = {};
+            competencies.forEach(comp => {
+                if (!grouped[comp.category]) {
+                    grouped[comp.category] = [];
+                }
+                grouped[comp.category].push(comp);
+            });
+            
+            let html = '';
+            Object.keys(grouped).forEach(category => {
+                html += `<h3 style="color: #605C7F; margin: 25px 0 15px 0; font-size: 18px; font-weight: 600;">${category}</h3>`;
+                grouped[category].forEach(comp => {
+                    html += `
+                        <div class="competency-card">
+                            <h4>
+                                ${comp.name}
+                                <span class="category-tag">${category}</span>
+                            </h4>
+                            ${comp.description ? `<p style="color: #64748b; font-size: 14px; margin-top: 8px;">${comp.description}</p>` : ''}
+                        </div>
+                    `;
+                });
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function renderEvaluators() {
+            const container = document.getElementById('evaluatorsList');
+            
+            if (evaluators.length === 0) {
+                container.innerHTML = '<p style="color: #64748b;">No evaluators configured.</p>';
+                return;
+            }
+            
+            let html = '<div class="director-grid">';
+            
+            evaluators.forEach(eval => {
+                html += `
+                    <div class="director-card">
+                        <div class="director-info">
+                            <h4>${eval.name}</h4>
+                            <p>${eval.email}</p>
+                            ${eval.role ? `<p style="font-size: 12px; color: #94a3b8;">${eval.role}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        async function addDirector() {
+            const name = document.getElementById('newDirectorName').value;
+            const email = document.getElementById('newDirectorEmail').value;
+            
+            if (!name || !email) {
+                alert('Please enter both name and email');
+                return;
+            }
+            
+            try {
+                await db.createDirector(ORG_ID, name, email);
+                alert('✓ Director added successfully!');
+                document.getElementById('newDirectorName').value = '';
+                document.getElementById('newDirectorEmail').value = '';
+                await loadDirectors();
+                renderDirectors();
+            } catch (error) {
+                alert('Error adding director: ' + error.message);
+            }
+        }
+        
+        async function removeDirector(directorId, directorName) {
+            if (!confirm(`Remove ${directorName} from the board?`)) {
+                return;
+            }
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('directors')
+                    .update({ is_active: false })
+                    .eq('id', directorId);
+                
+                if (error) throw error;
+                
+                alert('✓ Director removed successfully!');
+                await loadDirectors();
+                renderDirectors();
+            } catch (error) {
+                alert('Error removing director: ' + error.message);
+            }
+        }
+        
+        function showTab(index) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach((tab, i) => {
+                if (i === index) {
+                    tab.classList.add('active');
+                    contents[i].classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                    contents[i].classList.remove('active');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
